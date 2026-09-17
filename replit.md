@@ -10,7 +10,7 @@ A professional website for **Design Anywhere** — a premier remote mechanical e
 ## Tech Stack
 
 - **Frontend**: React + TypeScript + Tailwind CSS + shadcn/ui
-- **Backend**: Express.js (static file serving only — no API routes needed)
+- **Backend**: Express.js (static serving + `POST /api/contact` via Resend)
 - **Routing**: Wouter
 - **Forms**: react-hook-form + zod validation
 - **Icons**: lucide-react + react-icons/si (social media logos)
@@ -21,14 +21,15 @@ A professional website for **Design Anywhere** — a premier remote mechanical e
 client/src/
   pages/
     home.tsx        # Landing page with hero, services, stats, CTAs
-    contact.tsx     # Contact form — submits via mailto: link
+    contact.tsx     # Contact form — POST /api/contact
   components/
     navbar.tsx      # Sticky transparent-to-solid navbar
     footer.tsx      # Footer with logo, email, X/LinkedIn links, quick links, services
     logo.tsx        # Logo component (mix-blend-mode: screen on JPEG)
     ui/             # shadcn/ui components
 server/
-  routes.ts         # Empty — no backend API routes
+  routes.ts         # POST /api/contact
+  contact.ts        # Validation, rate limit, Resend send
 client/public/images/
   hero-engineering.jpg
   product-design.jpg
@@ -50,8 +51,8 @@ client/public/images/
 
 ## Contact Form
 
-The contact form uses `mailto:` — when submitted, it opens the visitor's default email client with all fields pre-filled (name, email, phone, service, subject, message) addressed to `engineering@designanywhere.org`. No backend or API key required.
+The contact form posts to `POST /api/contact`, which emails **To** `engineering@designanywhere.org` and **Bcc** `jordanbell@designanywhere.org` via Resend (`RESEND_API_KEY`). From address defaults to Resend's sandbox `onboarding@resend.dev`; use `leads@designanywhere.org` after verifying the domain. A mailto fallback to `engineering@designanywhere.org` remains on the page. See `README.md`.
 
 ## Deployment
 
-Configured as **autoscale** on Replit. Build: `npm run build`. Run: `node ./dist/index.cjs`. Custom domain: designanywhere.org.
+Configured as **autoscale** on Replit. Build: `npm run build`. Run: `node ./dist/index.cjs`. Custom domain: designanywhere.org still points at Replit (no DNS change in this work). Add `RESEND_API_KEY` as a Replit secret so leads send.

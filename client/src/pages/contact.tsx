@@ -2,38 +2,17 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { ArrowLeft, Mail, Send, CheckCircle2, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
-const SERVICE_OPTIONS = [
-  "Product Design",
-  "Prototype & DFM",
-  "Machine & Tooling Design",
-  "3D Modeling & CAD Services",
-  "PDM/PLM Creation",
-  "Manufacturing Solutions Consultation",
-  "Other Mechanical Engineering Services",
-] as const;
-
-const contactSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Please enter a valid email address"),
-  phone: z.string().min(7, "Please enter a valid phone number"),
-  service: z.enum(SERVICE_OPTIONS, { required_error: "Please select a service" }),
-  subject: z.string().min(1, "Subject is required"),
-  message: z.string().min(10, "Message must be at least 10 characters"),
-});
-
-type ContactFormData = z.infer<typeof contactSchema>;
+import { contactSchema, SERVICE_OPTIONS, type ContactFormData } from "@shared/contact";
 
 export default function Contact() {
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const form = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
@@ -48,27 +27,31 @@ export default function Contact() {
     },
   });
 
-  const onSubmit = (data: ContactFormData) => {
-    const { firstName, lastName, email, phone, service, subject, message } = data;
+  const onSubmit = async (data: ContactFormData) => {
+    setSubmitError(null);
 
-    const body = [
-      `Name: ${firstName} ${lastName}`,
-      `Email: ${email}`,
-      `Phone: ${phone}`,
-      `Service: ${service}`,
-      `Subject: ${subject}`,
-      ``,
-      `Message:`,
-      message,
-    ].join("\n");
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
 
-    const mailtoLink =
-      `mailto:engineering@designanywhere.org` +
-      `?subject=${encodeURIComponent(`[Contact Form] ${service} — ${subject}`)}` +
-      `&body=${encodeURIComponent(body)}`;
+      const payload = (await res.json().catch(() => null)) as
+        | { success?: boolean; error?: string }
+        | null;
 
-    window.location.href = mailtoLink;
-    setSubmitted(true);
+      if (!res.ok) {
+        setSubmitError(
+          payload?.error ?? "Failed to send message. Please try again.",
+        );
+        return;
+      }
+
+      setSubmitted(true);
+    } catch {
+      setSubmitError("Network error. Please try again or email us directly.");
+    }
   };
 
   return (
@@ -113,9 +96,9 @@ export default function Contact() {
                 <CheckCircle2 className="w-10 h-10 text-green-600" />
               </div>
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-3">Email Client Opened!</h2>
+            <h2 className="text-2xl font-bold text-slate-900 mb-3">Message Sent!</h2>
             <p className="text-slate-500 mb-8 max-w-sm mx-auto">
-              Your email client should have opened with the message pre-filled. Just hit send to reach us.
+              Thank you — your message has been sent. We'll get back to you soon.
             </p>
             <Link href="/">
               <Button
@@ -129,7 +112,7 @@ export default function Contact() {
         ) : (
           <>
             <p className="text-slate-600 mb-6 text-sm">
-              E-mail us directly at{" "}
+              Prefer email? Write us at{" "}
               <a
                 href="mailto:engineering@designanywhere.org"
                 className="text-blue-600 hover:underline font-medium"
@@ -314,14 +297,31 @@ export default function Contact() {
                     )}
                   />
 
+                  {submitError && (
+                    <p
+                      role="alert"
+                      data-testid="contact-submit-error"
+                      className="text-sm text-red-600"
+                    >
+                      {submitError} If this keeps happening, email{" "}
+                      <a
+                        href="mailto:engineering@designanywhere.org"
+                        className="underline font-medium"
+                      >
+                        engineering@designanywhere.org
+                      </a>
+                    </p>
+                  )}
+
                   <Button
                     type="submit"
                     size="lg"
+                    disabled={form.formState.isSubmitting}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white border-0"
                     data-testid="button-send-message"
                   >
                     <Send className="w-4 h-4 mr-2" />
-                    Send Message
+                    {form.formState.isSubmitting ? "Sending…" : "Send Message"}
                   </Button>
                 </form>
               </Form>
