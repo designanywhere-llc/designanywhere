@@ -2,35 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { ArrowRight, Wrench, Box, Settings, Layers, Database, Factory, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { publicUrl } from "@/lib/publicUrl";
-
-import proto1 from "@assets/8ebae936a87805d92f109d49b0560203c65a9e6ade657cb5abe6cf8cffdf4_1772514607316.jpeg";
-import proto2 from "@assets/IMG_0528_1772514607316.jpeg";
-import proto3 from "@assets/IMG_2173_1772514607316.jpeg";
-import proto4 from "@assets/IMG_6339_1772514607316.jpeg";
-import proto5 from "@assets/66113041491__C8CE3DDA-9B2C-4205-BA43-9E93FF0C5B51_1772514607316.jpeg";
-import proto6 from "@assets/IMG_2929_1772514607316.jpeg";
-import proto7 from "@assets/IMG_2943_1772514607316.jpeg";
-import proto8 from "@assets/IMG_2995_1772514607316.jpeg";
-import proto9 from "@assets/IMG_3306_1772514607316.jpeg";
-import proto10 from "@assets/IMG_3371_1772514607316.jpeg";
-import proto11 from "@assets/IMG_2108_1772514607316.jpeg";
-import proto12 from "@assets/IMG_2115_1772514607316.jpeg";
-
-import cad1 from "@assets/IMG_5072_1772515453556.jpeg";
-import cad2 from "@assets/67407438809__A989F2E7-C83D-400D-A4CB-947D3AD0EA4B_1772515453556.jpeg";
-import cad3 from "@assets/67407282499__7945E13A-0F27-465D-9E80-D549B4F8D509_1772515453556.jpeg";
-import cad4 from "@assets/65714444531__571DEEE4-101A-4BD4-94AB-D938268B5966_1772515453556.jpeg";
-import cad5 from "@assets/66752388593__92FE3710-E238-4134-B9EB-484BD3D83BA6_1772515453556.jpeg";
-import cad6 from "@assets/66752453223__FC4F6CC9-6181-4496-BA2B-E95E823ECE3F_1772515453556.jpeg";
-import cad7 from "@assets/IMG_5449_1772515453556.jpeg";
-
-const prototypeImages = [
-  proto1, proto2, proto3, proto4, proto5, proto6,
-  proto7, proto8, proto9, proto10, proto11, proto12,
-];
-
-const cadImages = [cad1, cad2, cad3, cad4, cad5, cad6, cad7];
+import { publicUrl, serviceImageUrls } from "@/lib/publicUrl";
 
 const CYCLE_MS = 3000;
 const FADE_MS = 1000;
@@ -40,53 +12,48 @@ const services = [
     id: "product-design",
     title: "Product Design",
     description: "Taking customer napkin sketches and descriptions to manufacturable products",
-    image: publicUrl("images/product-design.jpg"),
+    images: serviceImageUrls("product-design"),
     icon: Box,
   },
   {
     id: "prototype-dfm",
     title: "Prototype & DFM",
     description: "3D printing, testing and refining, to improving prototypes with Design For Manufacturing",
-    image: publicUrl("images/prototype-dfm.jpg"),
+    images: serviceImageUrls("prototype-dfm"),
     icon: Layers,
   },
   {
     id: "machine-tooling",
     title: "Machine & Tooling Design",
     description: "Custom machinery, tooling for existing machines, PLM Programming, assembly and quality/buy-off testing",
-    image: publicUrl("images/machine-tooling.jpg"),
+    images: serviceImageUrls("machine-tooling"),
     icon: Wrench,
   },
   {
     id: "cad-3d-modeling",
     title: "3D Modeling & CAD Services",
     description: "Using SolidWorks and GD&T, delivering parts, assemblies, and drawings",
-    image: publicUrl("images/cad-3d-modeling.jpg"),
+    images: serviceImageUrls("cad-3d-modeling"),
     icon: Settings,
   },
   {
     id: "pdm-plm",
     title: "PDM/PLM Creation",
     description: "Building SolidWorks PDM Servers, Databases, Vaults and Workflows connected to your desired properties",
-    image: publicUrl("images/pdm-plm.jpg"),
+    images: serviceImageUrls("pdm-plm"),
     icon: Database,
   },
   {
     id: "manufacturing-consultation",
     title: "Manufacturing Solutions Consultation",
     description: "From resolving issues with machinery and manufacturing lines to packaging development",
-    image: publicUrl("images/manufacturing-consultation.jpg"),
+    images: serviceImageUrls("manufacturing-consultation"),
     icon: Factory,
   },
 ];
 
-function CyclingServiceCard({
-  service,
-  images,
-}: {
-  service: typeof services[0];
-  images: string[];
-}) {
+function CyclingServiceCard({ service }: { service: typeof services[0] }) {
+  const images = service.images;
   const n = images.length;
 
   // Two-layer crossfade: "front" is always what the user sees, "back" is hidden
@@ -285,44 +252,9 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {services.map((service) => {
-              if (service.id === "prototype-dfm") {
-                return <CyclingServiceCard key={service.id} service={service} images={prototypeImages} />;
-              }
-              if (service.id === "cad-3d-modeling") {
-                return <CyclingServiceCard key={service.id} service={service} images={cadImages} />;
-              }
-              const Icon = service.icon;
-              return (
-                <div
-                  key={service.id}
-                  data-testid={`card-service-${service.id}`}
-                  className="group rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm hover-elevate transition-all duration-300"
-                >
-                  <div className="relative h-52 overflow-hidden">
-                    <img
-                      src={service.image}
-                      alt={service.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 to-transparent" />
-                    <div className="absolute bottom-3 left-4">
-                      <div className="bg-blue-600/90 backdrop-blur-sm p-2 rounded-lg">
-                        <Icon className="w-5 h-5 text-white" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-blue-700 transition-colors">
-                      {service.title}
-                    </h3>
-                    <p className="text-slate-500 text-sm leading-relaxed">
-                      {service.description}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
+            {services.map((service) => (
+              <CyclingServiceCard key={service.id} service={service} />
+            ))}
           </div>
 
           <div className="text-center mt-14">

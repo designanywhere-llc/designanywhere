@@ -13,6 +13,14 @@ Marketing site for [Design Anywhere](https://designanywhere.org) — a remote me
 
 Pages is published from the Vite client build (`dist/public`) by `.github/workflows/pages.yml`.
 
+## Service card photos
+
+Homepage service cards cycle 4 images on hover. Drop real job photos into:
+
+`client/public/images/services/<service-id>/01.jpg` … `04.jpg`
+
+See [`client/public/images/services/README.md`](client/public/images/services/README.md) for folder names, sizing, and the filename convention. Replacing those files does not require a code change.
+
 ## Contact form
 
 The `/contact` form POSTs to **[FormSubmit](https://formsubmit.co)** — no Express server and no API keys:
