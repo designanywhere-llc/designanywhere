@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { ArrowRight, Wrench, Box, Settings, Layers, Database, Factory, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { publicUrl } from "@/lib/publicUrl";
 
 import proto1 from "@assets/8ebae936a87805d92f109d49b0560203c65a9e6ade657cb5abe6cf8cffdf4_1772514607316.jpeg";
 import proto2 from "@assets/IMG_0528_1772514607316.jpeg";
@@ -39,42 +40,42 @@ const services = [
     id: "product-design",
     title: "Product Design",
     description: "Taking customer napkin sketches and descriptions to manufacturable products",
-    image: "/images/product-design.jpg",
+    image: publicUrl("images/product-design.jpg"),
     icon: Box,
   },
   {
     id: "prototype-dfm",
     title: "Prototype & DFM",
     description: "3D printing, testing and refining, to improving prototypes with Design For Manufacturing",
-    image: "/images/prototype-dfm.jpg",
+    image: publicUrl("images/prototype-dfm.jpg"),
     icon: Layers,
   },
   {
     id: "machine-tooling",
     title: "Machine & Tooling Design",
     description: "Custom machinery, tooling for existing machines, PLM Programming, assembly and quality/buy-off testing",
-    image: "/images/machine-tooling.jpg",
+    image: publicUrl("images/machine-tooling.jpg"),
     icon: Wrench,
   },
   {
     id: "cad-3d-modeling",
     title: "3D Modeling & CAD Services",
     description: "Using SolidWorks and GD&T, delivering parts, assemblies, and drawings",
-    image: "/images/cad-3d-modeling.jpg",
+    image: publicUrl("images/cad-3d-modeling.jpg"),
     icon: Settings,
   },
   {
     id: "pdm-plm",
     title: "PDM/PLM Creation",
     description: "Building SolidWorks PDM Servers, Databases, Vaults and Workflows connected to your desired properties",
-    image: "/images/pdm-plm.jpg",
+    image: publicUrl("images/pdm-plm.jpg"),
     icon: Database,
   },
   {
     id: "manufacturing-consultation",
     title: "Manufacturing Solutions Consultation",
     description: "From resolving issues with machinery and manufacturing lines to packaging development",
-    image: "/images/manufacturing-consultation.jpg",
+    image: publicUrl("images/manufacturing-consultation.jpg"),
     icon: Factory,
   },
 ];
@@ -217,7 +218,7 @@ export default function Home() {
       <section
         className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
         style={{
-          backgroundImage: `url('/images/hero-engineering.jpg')`,
+          backgroundImage: `url('${publicUrl("images/hero-engineering.jpg")}')`,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}

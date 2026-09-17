@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { contactSchema, SERVICE_OPTIONS, type ContactFormData } from "@shared/contact";
+import { submitContactForm } from "@/lib/submitContact";
 
 export default function Contact() {
   const [submitted, setSubmitted] = useState(false);
@@ -31,26 +32,18 @@ export default function Contact() {
     setSubmitError(null);
 
     try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      const payload = (await res.json().catch(() => null)) as
-        | { success?: boolean; error?: string }
-        | null;
-
-      if (!res.ok) {
-        setSubmitError(
-          payload?.error ?? "Failed to send message. Please try again.",
-        );
+      await submitContactForm(data);
+      setSubmitted(true);
+    } catch (err) {
+      if (err instanceof TypeError) {
+        setSubmitError("Network error. Please try again or email us directly.");
         return;
       }
-
-      setSubmitted(true);
-    } catch {
-      setSubmitError("Network error. Please try again or email us directly.");
+      setSubmitError(
+        err instanceof Error
+          ? err.message
+          : "Failed to send message. Please try again.",
+      );
     }
   };
 

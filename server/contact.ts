@@ -2,6 +2,12 @@ import type { Request, Response } from "express";
 import { Resend } from "resend";
 import { contactSchema } from "../shared/contact";
 
+/**
+ * Legacy/local handler for POST /api/contact (Resend).
+ * The GitHub Pages site submits via FormSubmit instead; this path is kept so
+ * `npm run dev` / `npm start` still work.
+ */
+
 const WINDOW_MS = 15 * 60 * 1000;
 const MAX_REQUESTS = 5;
 
