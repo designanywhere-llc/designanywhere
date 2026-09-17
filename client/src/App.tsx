@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Router, Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -10,7 +10,10 @@ import Pricing from "@/pages/pricing";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
-function Router() {
+/** Vite BASE_URL always has a trailing slash; wouter's base must not. */
+const routerBase = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+function Routes() {
   return (
     <Switch>
       <Route path="/" component={Home} />
@@ -23,14 +26,16 @@ function Router() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Navbar />
-        <Router />
-        <Footer />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <Router base={routerBase}>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Navbar />
+          <Routes />
+          <Footer />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </Router>
   );
 }
 

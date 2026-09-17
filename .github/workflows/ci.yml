@@ -1,5 +1,5 @@
-# Typecheck and production build. Contact email sending is not exercised here;
-# RESEND_API_KEY is only required at runtime (Replit Secrets / production env).
+# Typecheck and production build (client + Express). GitHub Pages uses a
+# separate workflow (.github/workflows/pages.yml) and does not need secrets.
 name: CI
 
 on:

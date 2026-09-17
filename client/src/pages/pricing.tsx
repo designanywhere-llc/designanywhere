@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { DollarSign, Calculator } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -200,7 +201,7 @@ export default function Pricing() {
 
         <p className="text-center text-slate-400 text-xs px-4">
           This is an estimate only. Final pricing is determined based on project scope and complexity.{" "}
-          <a href="/contact" className="text-slate-500 hover:text-slate-700 hover:underline">Contact us</a> for a detailed quote.
+          <Link href="/contact" className="text-slate-500 hover:text-slate-700 hover:underline">Contact us</Link> for a detailed quote.
         </p>
       </div>
     </div>
