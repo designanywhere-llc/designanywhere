@@ -4,14 +4,12 @@ Marketing site for [Design Anywhere](https://designanywhere.org) — a remote me
 
 **Intended host:** GitHub Pages (this repo). **Replit is legacy** and should not receive new deploys.
 
-**Live custom domain:** `designanywhere.org` still points at the old Replit deployment. Do not change Namecheap DNS until a later cutover. Until then, use the GitHub Pages preview:
-
 | Environment | URL |
 | --- | --- |
-| **Pages preview** | `https://designanywhere-llc.github.io/designanywhere/` |
-| Custom domain (later) | `https://designanywhere.org` |
+| **Custom domain (canonical)** | `https://designanywhere.org` |
+| Pages preview | `https://designanywhere-llc.github.io/designanywhere/` |
 
-Pages is published from the Vite client build (`dist/public`) by `.github/workflows/pages.yml`.
+Pages is published from the Vite client build (`dist/public`) by `.github/workflows/pages.yml`. The deploy artifact includes a root `CNAME` (`designanywhere.org`). The workflow builds with `BASE_PATH` from `actions/configure-pages` (`/` on a custom domain so assets load at the apex).
 
 ## Service card photos
 
@@ -57,19 +55,23 @@ npm start              # production Express (dist/index.cjs)
 
 1. Repo **Settings → Pages → Source: GitHub Actions** (required once).
 2. Push to `main` (or run **Deploy GitHub Pages** via workflow_dispatch).
-3. Preview: **https://designanywhere-llc.github.io/designanywhere/**
+3. Canonical: **https://designanywhere.org** (preview: **https://designanywhere-llc.github.io/designanywhere/**).
 
-The workflow builds with `BASE_PATH` from `actions/configure-pages` so asset URLs work on the project site (`/designanywhere/`). Client routes `/`, `/contact`, and `/pricing` are emitted as folders plus a `404.html` SPA fallback.
+The workflow builds with `BASE_PATH` from `actions/configure-pages` so asset URLs work on the project site (`/designanywhere/`) and on the custom domain (`/`). Client routes `/`, `/contact`, and `/pricing` are emitted as folders plus a `404.html` SPA fallback.
 
-### Custom domain (not tonight)
+### Custom domain
 
-A `CNAME` file at the repo root contains `designanywhere.org`. It is **not** copied into the Pages artifact yet, so the github.io preview keeps working while DNS still points at Replit.
+A root `CNAME` file (`designanywhere.org`) is copied into `dist/public` after `build:client` so the Pages artifact publishes the apex domain. DNS is managed outside this repo (Squarespace); do not drop existing iCloud mail records.
 
-When you are ready to cut over:
+| Host | Type | Value |
+| --- | --- | --- |
+| `@` (apex) | A | `185.199.108.153` |
+| `@` (apex) | A | `185.199.109.153` |
+| `@` (apex) | A | `185.199.110.153` |
+| `@` (apex) | A | `185.199.111.153` |
+| `www` (optional) | CNAME | `designanywhere-llc.github.io` |
 
-1. Point Namecheap DNS for `designanywhere.org` (and `www` if desired) at GitHub Pages.
-2. Copy `CNAME` into the published site (e.g. add `cp CNAME dist/public/CNAME` to the Pages workflow after `build:client`) **or** set the custom domain in **Settings → Pages**.
-3. Wait for HTTPS; then `https://designanywhere.org` is canonical.
+Leave MX and TXT records for iCloud mail unchanged. After DNS points at GitHub, wait for Pages HTTPS on `designanywhere.org`.
 
 ## Required secrets
 

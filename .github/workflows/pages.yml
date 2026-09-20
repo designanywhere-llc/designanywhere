@@ -37,13 +37,15 @@ jobs:
         run: npm run build:client
         env:
           NODE_ENV: production
+          # configure-pages sets this to `/` once the custom domain is active,
+          # so assets load at the apex instead of /designanywhere/.
           BASE_PATH: ${{ steps.pages.outputs.base_path }}
+      - name: Include custom domain CNAME
+        run: cp CNAME dist/public/CNAME
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: dist/public
-      # After Namecheap DNS points at GitHub, copy the repo-root CNAME into
-      # dist/public before this upload so Pages serves designanywhere.org.
 
   deploy:
     needs: build

@@ -15,8 +15,8 @@ function viteBase(): string {
  * GitHub Pages has no SPA fallback. Copy index.html to 404.html and to each
  * client route so /contact and /pricing work on a hard refresh.
  *
- * Do not copy the repo-root CNAME into the artifact until DNS is cut over to
- * GitHub; publishing it now would send the github.io preview to Replit.
+ * The repo-root CNAME is copied into dist/public by .github/workflows/pages.yml
+ * after this build so Pages serves designanywhere.org.
  */
 function githubPagesSpaFallback(): Plugin {
   return {
