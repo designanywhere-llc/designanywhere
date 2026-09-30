@@ -41,6 +41,22 @@ The POST URL is the `CONTACT_ENDPOINT` constant in `client/src/lib/submitContact
 
 The Express `POST /api/contact` + Resend path is still in the repo for local/legacy use. The static site does not call it.
 
+## Project estimator
+
+The pricing page (`/pricing`) turns a plain-language project description into a ballpark by service and hours. It runs in the browser. There is no API key and no language-model call.
+
+Phrase lists, hour ranges, and the complexity adjustments (part count, size, production, metal, PDM setup, “CAD only”) live in [`client/src/lib/projectEstimateRules.ts`](client/src/lib/projectEstimateRules.ts). That file explains how a match becomes hours. Dollar rates stay in `ESTIMATE_SERVICES` inside [`client/src/lib/estimate.ts`](client/src/lib/estimate.ts) — the estimator reads them from there.
+
+After you change a phrase or an hour range:
+
+```bash
+npm run test:quote
+```
+
+The samples in `client/src/lib/projectEstimate.test.ts` are the descriptions and ranges the page is checked against. A description that matches nothing gets a small consultation package, and the page says the first conversation is free and the final quote comes after that.
+
+**Schedule your project** uses the same submit path as the contact form (`CONTACT_ENDPOINT` in `client/src/lib/submitContact.ts`). A quote adds `type: "quote"` and an `estimate` object (`description`, per-service `hours` and `rate`, and `total`) on top of the existing fields, including `name` and `_honey`. The `message` is also a plain-text copy of the estimate, so the email is readable if the extra fields are stripped. If the POST fails, the visitor’s mail app opens with that same text.
+
 ## Scripts
 
 ```bash

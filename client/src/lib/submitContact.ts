@@ -1,6 +1,29 @@
 import type { ContactFormData } from "@shared/contact";
 
 /**
+ * Structured ballpark sent with `type: "quote"`.
+ * The readable copy also lives in `message`, so a plain email is still useful.
+ * Rates and the total come from the pricing-page estimator, not from this file.
+ */
+export type QuoteEstimatePayload = {
+  description: string;
+  services: Array<{
+    id: string;
+    label: string;
+    hours: number;
+    rate: number;
+    cost: number;
+  }>;
+  total: number;
+};
+
+/** Contact form fields, plus the optional quote fields the lead API accepts. */
+export type ContactSubmission = ContactFormData & {
+  type?: "quote";
+  estimate?: QuoteEstimatePayload;
+};
+
+/**
  * Where the contact form POSTs JSON.
  * Swap this single constant for a Resend-backed serverless endpoint later.
  * Keep the same JSON body from `buildContactPayload`.
@@ -52,10 +75,11 @@ export function contactSubjectLine(
 }
 
 export function buildContactPayload(
-  data: ContactFormData,
+  data: ContactSubmission,
   options: { honey?: string; pageUrl?: string } = {},
-): Record<string, string> {
-  return {
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
+    name: `${data.firstName} ${data.lastName}`.trim().replace(/\s+/g, " "),
     firstName: data.firstName,
     lastName: data.lastName,
     email: data.email,
@@ -71,6 +95,9 @@ export function buildContactPayload(
     _honey: options.honey ?? "",
     _url: options.pageUrl ?? "",
   };
+  if (data.type) payload.type = data.type;
+  if (data.estimate) payload.estimate = data.estimate;
+  return payload;
 }
 
 function mentionsActivation(message: unknown): boolean {
@@ -219,7 +246,7 @@ function fallbackMailto(
  * the lead is not lost.
  */
 export async function submitContactForm(
-  data: ContactFormData,
+  data: ContactSubmission,
   options: SubmitContactOptions = {},
 ): Promise<ContactSubmitResult> {
   const fetchImpl = options.fetchImpl ?? fetch;
