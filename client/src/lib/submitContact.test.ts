@@ -106,6 +106,10 @@ describe("interpretContactResponse", () => {
       "sent",
     );
     assert.equal(
+      interpretContactResponse(200, JSON.stringify({ success: true, id: "lead-1", emailed: false })),
+      "sent",
+    );
+    assert.equal(
       interpretContactResponse(200, JSON.stringify({ success: false, message: "nope" })),
       "failed",
     );
@@ -132,7 +136,7 @@ describe("submitContactForm", () => {
     assert.deepEqual(result, { status: "sent" });
     assert.deepEqual(opened, []);
     assert.equal(requested?.url, CONTACT_ENDPOINT);
-    assert.equal(CONTACT_ENDPOINT, "https://formsubmit.co/ajax/engineering@designanywhere.org");
+    assert.equal(CONTACT_ENDPOINT, "https://api.designanywhere.org/api/lead");
     const headers = new Headers(requested?.init.headers);
     assert.equal(headers.get("Content-Type"), "application/json");
     assert.equal(headers.get("Accept"), "application/json");
@@ -146,10 +150,14 @@ describe("submitContactForm", () => {
       ),
     );
     const payload = JSON.parse(String(requested?.init.body)) as Record<string, string>;
+    assert.equal(payload.type, "contact");
     assert.equal(payload._honey, "");
     assert.equal(payload._url, "https://designanywhere.org/contact");
-    assert.equal(payload._cc, CONTACT_CC);
-    assert.equal(payload._replyto, sample.email);
+    assert.equal("_cc" in payload, false);
+    assert.equal("_captcha" in payload, false);
+    assert.equal("_replyto" in payload, false);
+    assert.equal("_template" in payload, false);
+    assert.equal("_subject" in payload, false);
   });
 
   it("includes a filled honeypot in the payload", async () => {

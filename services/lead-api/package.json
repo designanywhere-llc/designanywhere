@@ -1,0 +1,12 @@
+{
+  "name": "designanywhere-lead-api",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Vercel function only. Set the Vercel project Root Directory to services/lead-api so the GitHub Pages site is not built.",
+  "dependencies": {
+    "@vercel/blob": "2.8.0",
+    "resend": "6.9.3",
+    "zod": "3.24.2"
+  }
+}
