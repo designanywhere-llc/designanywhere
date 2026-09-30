@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,11 +9,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { contactSchema, SERVICE_OPTIONS, type ContactFormData } from "@shared/contact";
-import { submitContactForm } from "@/lib/submitContact";
+import { CONTACT_TO, submitContactForm } from "@/lib/submitContact";
 
 export default function Contact() {
   const [submitted, setSubmitted] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [mailtoFallback, setMailtoFallback] = useState<{
+    href: string;
+    truncated: boolean;
+  } | null>(null);
+  const honeyRef = useRef<HTMLInputElement>(null);
+  const fallbackRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!mailtoFallback) return;
+    fallbackRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [mailtoFallback]);
 
   const form = useForm<ContactFormData>({
     resolver: zodResolver(contactSchema),
@@ -29,22 +39,21 @@ export default function Contact() {
   });
 
   const onSubmit = async (data: ContactFormData) => {
-    setSubmitError(null);
+    setMailtoFallback(null);
 
-    try {
-      await submitContactForm(data);
+    const result = await submitContactForm(data, {
+      honey: honeyRef.current?.value ?? "",
+    });
+
+    if (result.status === "sent") {
       setSubmitted(true);
-    } catch (err) {
-      if (err instanceof TypeError) {
-        setSubmitError("Network error. Please try again or email us directly.");
-        return;
-      }
-      setSubmitError(
-        err instanceof Error
-          ? err.message
-          : "Failed to send message. Please try again.",
-      );
+      return;
     }
+
+    setMailtoFallback({
+      href: result.mailtoHref,
+      truncated: result.truncated,
+    });
   };
 
   return (
@@ -107,11 +116,11 @@ export default function Contact() {
             <p className="text-slate-600 mb-6 text-sm">
               Prefer email? Write us at{" "}
               <a
-                href="mailto:engineering@designanywhere.org"
+                href={`mailto:${CONTACT_TO}`}
                 className="text-blue-600 hover:underline font-medium"
                 data-testid="link-email-address"
               >
-                engineering@designanywhere.org
+                {CONTACT_TO}
               </a>
             </p>
 
@@ -119,9 +128,24 @@ export default function Contact() {
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-6"
+                  className="relative space-y-6"
                   data-testid="form-contact"
                 >
+                  {/* Honeypot: people never see this. Bots that fill it are dropped by the form backend. */}
+                  <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+                    <label htmlFor="contact-honey">Company website</label>
+                    <input
+                      ref={honeyRef}
+                      id="contact-honey"
+                      name="_honey"
+                      type="text"
+                      tabIndex={-1}
+                      autoComplete="off"
+                      defaultValue=""
+                      data-testid="input-honey"
+                    />
+                  </div>
+
                   {/* Name Row */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField
@@ -290,20 +314,41 @@ export default function Contact() {
                     )}
                   />
 
-                  {submitError && (
-                    <p
+                  {mailtoFallback && (
+                    <div
+                      ref={fallbackRef}
                       role="alert"
-                      data-testid="contact-submit-error"
-                      className="text-sm text-red-600"
+                      data-testid="contact-mailto-fallback"
+                      className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-4 text-sm text-slate-700 space-y-3"
                     >
-                      {submitError} If this keeps happening, email{" "}
+                      <p>
+                        We couldn't send your message from this form. Your email app has been opened with your message ready to send. Please press send there so we get it.
+                      </p>
+                      {mailtoFallback.truncated && (
+                        <p data-testid="contact-mailto-truncated">
+                          Your message was shortened so it would fit in the email. Please add anything that was cut off before you send.
+                        </p>
+                      )}
+                      <p>If your email app didn't open, use the button below.</p>
                       <a
-                        href="mailto:engineering@designanywhere.org"
-                        className="underline font-medium"
+                        href={mailtoFallback.href}
+                        data-testid="button-open-email-fallback"
+                        className="inline-flex items-center justify-center rounded-md border border-blue-600 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-600 hover:text-white"
                       >
-                        engineering@designanywhere.org
+                        <Mail className="w-4 h-4 mr-2" />
+                        Open your email app again
                       </a>
-                    </p>
+                      <p>
+                        Our email address is{" "}
+                        <a
+                          href={`mailto:${CONTACT_TO}`}
+                          className="font-semibold text-blue-700 hover:underline"
+                          data-testid="text-fallback-email"
+                        >
+                          {CONTACT_TO}
+                        </a>
+                      </p>
+                    </div>
                   )}
 
                   <Button
