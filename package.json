@@ -11,7 +11,7 @@
     "test:quote": "tsx --test client/src/lib/estimate.test.ts shared/contact.test.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
-    "test": "tsx --test client/src/lib/submitContact.test.ts services/lead-api/src/lead.test.ts",
+    "test": "tsx --test client/src/lib/submitContact.test.ts services/lead-api/src/lead.test.ts && node scripts/smoke-lead-api.mjs",
     "leads:list": "tsx scripts/list-leads.ts",
     "db:push": "drizzle-kit push"
   },

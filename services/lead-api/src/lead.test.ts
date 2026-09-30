@@ -1,14 +1,14 @@
 import assert from "node:assert/strict";
 import { beforeEach, describe, it } from "node:test";
-import { DEFAULT_BCC, DEFAULT_FROM, DEFAULT_TO, toResendPayload, type LeadEmail } from "./email";
+import { DEFAULT_BCC, DEFAULT_FROM, DEFAULT_TO, toResendPayload, type LeadEmail } from "./email.js";
 import {
   handleLead,
   isPrivateAccessUnsupported,
   type BlobPutOptions,
   type LeadDeps,
-} from "./lead";
-import { resetLeadRateLimits } from "./rate-limit";
-import { leadRequestSchema } from "./schema";
+} from "./lead.js";
+import { resetLeadRateLimits } from "./rate-limit.js";
+import { leadRequestSchema } from "./schema.js";
 
 const validContact = {
   firstName: "Ada",
@@ -54,6 +54,7 @@ function harness(options: {
     sendEmail: options.sendEmail ?? (async (message) => {
       order.push("email");
       emails.push(message);
+      return "re_test_123";
     }),
   };
   return { deps, blobs, emails, order };
@@ -149,6 +150,8 @@ describe("handleLead", () => {
     assert.deepEqual(response.json, {
       success: true,
       id: "2026-09-30T16:18:00.000Z-abc123",
+      emailed: true,
+      emailId: "re_test_123",
     });
     assert.deepEqual(order.slice(0, 2), ["blob", "email"]);
     assert.equal(blobs[0]?.options.access, "private");
@@ -166,6 +169,9 @@ describe("handleLead", () => {
     assert.equal(emails[0]?.from, DEFAULT_FROM);
     assert.equal(emails[0]?.replyTo, "ada@example.com");
     assert.equal(emails[0]?.subject, "New lead: Prototype quote — Ada Lovelace");
+    const saved = JSON.parse(blobs.at(-1)?.body ?? "{}") as { emailed?: boolean; emailId?: string };
+    assert.equal(saved.emailed, true);
+    assert.equal(saved.emailId, "re_test_123");
     const resend = toResendPayload(emails[0]!);
     assert.deepEqual(resend.bcc, [DEFAULT_BCC]);
     assert.equal("cc" in resend, false);
@@ -321,11 +327,14 @@ describe("handleLead", () => {
       },
       sendEmail: async () => {
         order.push("email");
+        return "re_public_456";
       },
     });
     const response = await read(await handleLead(post(validContact), deps));
     assert.equal(response.status, 200);
     assert.equal(response.json.success, true);
+    assert.equal(response.json.emailed, true);
+    assert.equal(response.json.emailId, "re_public_456");
     assert.deepEqual(order.slice(0, 3), ["blob:private", "blob:public", "email"]);
     assert.equal(calls[1]?.access, "public");
     assert.equal(calls[1]?.addRandomSuffix, true);

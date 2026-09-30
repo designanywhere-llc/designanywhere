@@ -1,8 +1,8 @@
 import { randomBytes } from "node:crypto";
-import { corsHeaders, type LeadEnv } from "./cors";
-import { buildLeadEmail, type LeadEmail } from "./email";
-import { isRateLimited } from "./rate-limit";
-import { displayName, honeypotTripped, leadRequestSchema, type LeadRequest } from "./schema";
+import { corsHeaders, type LeadEnv } from "./cors.js";
+import { buildLeadEmail, type LeadEmail } from "./email.js";
+import { isRateLimited } from "./rate-limit.js";
+import { displayName, honeypotTripped, leadRequestSchema, type LeadRequest } from "./schema.js";
 
 export type BlobAccess = "private" | "public";
 
@@ -22,7 +22,8 @@ export type BlobPutResult = {
 export type LeadDeps = {
   env: LeadEnv;
   putBlob: (pathname: string, body: string, options: BlobPutOptions) => Promise<BlobPutResult>;
-  sendEmail: (message: LeadEmail) => Promise<void>;
+  /** Resolves to the Resend message id. Throw, or return an empty string, when sending fails. */
+  sendEmail: (message: LeadEmail) => Promise<string>;
   now?: () => Date;
   randomId?: () => string;
 };
@@ -43,6 +44,7 @@ type StoredLead = {
   pageUrl?: string;
   emailed: boolean;
   emailError: string | null;
+  emailId?: string;
 };
 
 const UNAVAILABLE = "Contact form is temporarily unavailable.";
@@ -271,8 +273,12 @@ async function handleLeadInner(
     }
   }
 
+  let emailId = "";
   try {
-    await deps.sendEmail(buildLeadEmail(parsed.data, planned.id, deps.env));
+    emailId = await deps.sendEmail(buildLeadEmail(parsed.data, planned.id, deps.env));
+    if (!emailId) {
+      throw new Error("Resend did not return a message id");
+    }
   } catch (err) {
     console.error("Lead was stored but email failed", errorText(err));
     await rememberEmailResult(deps, access, pathname, {
@@ -287,6 +293,7 @@ async function handleLeadInner(
     ...record,
     emailed: true,
     emailError: null,
+    emailId,
   });
-  return jsonResponse(200, { success: true, id: planned.id }, cors);
+  return jsonResponse(200, { success: true, id: planned.id, emailed: true, emailId }, cors);
 }

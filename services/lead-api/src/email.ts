@@ -1,4 +1,4 @@
-import { displayName, type LeadRequest } from "./schema";
+import { displayName, type LeadRequest } from "./schema.js";
 
 /**
  * Same HTML escaping as the legacy Express handler in `server/contact.ts`.

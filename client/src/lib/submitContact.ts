@@ -73,8 +73,8 @@ function mentionsActivation(message: unknown): boolean {
 
 /**
  * Decide whether the backend accepted the lead.
- * `success: true` is received (including `{ emailed: false }` after the lead
- * was stored). A JSON `message` that mentions activation still counts as
+ * `success: true` is received, including `{ emailed: true, emailId }` and
+ * `{ emailed: false }` after the lead was stored. A JSON `message` that mentions activation still counts as
  * received so an old FormSubmit confirmation response is not a visitor failure.
  */
 export function interpretContactResponse(

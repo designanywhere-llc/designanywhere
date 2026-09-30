@@ -1,8 +1,8 @@
 import { put } from "@vercel/blob";
 import { Resend } from "resend";
-import { toResendPayload } from "./email";
-import type { BlobPutOptions, BlobPutResult, LeadDeps } from "./lead";
-import type { LeadEnv } from "./cors";
+import { toResendPayload } from "./email.js";
+import type { BlobPutOptions, BlobPutResult, LeadDeps } from "./lead.js";
+import type { LeadEnv } from "./cors.js";
 
 /**
  * Blob first, then Resend. `BLOB_READ_WRITE_TOKEN` is read by `@vercel/blob`
@@ -28,10 +28,14 @@ export function createRuntimeDeps(env: LeadEnv): LeadDeps {
         throw new Error("RESEND_API_KEY is not set");
       }
       const resend = new Resend(apiKey);
-      const { error } = await resend.emails.send(toResendPayload(message));
+      const { data, error } = await resend.emails.send(toResendPayload(message));
       if (error) {
         throw new Error(error.message || "Resend rejected the email");
       }
+      if (!data?.id) {
+        throw new Error("Resend did not return a message id");
+      }
+      return data.id;
     },
   };
 }

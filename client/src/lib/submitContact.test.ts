@@ -110,6 +110,13 @@ describe("interpretContactResponse", () => {
       "sent",
     );
     assert.equal(
+      interpretContactResponse(
+        200,
+        JSON.stringify({ success: true, id: "lead-1", emailed: true, emailId: "re_123" }),
+      ),
+      "sent",
+    );
+    assert.equal(
       interpretContactResponse(200, JSON.stringify({ success: false, message: "nope" })),
       "failed",
     );

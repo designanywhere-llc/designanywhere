@@ -38,7 +38,7 @@ The function writes the lead to Vercel Blob first, then emails it with Resend:
 
 If that POST fails — non-OK status, non-JSON body, `success` not `true`, a network error, or no response within about 10 seconds — the page opens the visitor's email app with a prefilled message to `engineering@designanywhere.org` (CC `jordanbell@designanywhere.org`) using their name, email, phone, service, subject, and message. Mailto has no Bcc field, so the fallback still uses CC. The form stays on screen with a link to open that email again and a plain display of the address. Very long messages are shortened so the mailto link stays usable.
 
-`{ success: true, id }` counts as received, including `{ success: true, id, emailed: false }` when the lead was stored but Resend failed. A JSON `message` that mentions activation is still treated as received so an old FormSubmit confirmation body is not shown as a failure.
+`{ success: true, id, emailed: true, emailId }` counts as received. `{ success: true, id, emailed: false }` also counts as received: the lead was stored but Resend failed. A JSON `message` that mentions activation is still treated as received so an old FormSubmit confirmation body is not shown as a failure.
 
 The JSON body includes the form fields, `type: "contact"`, a hidden `_honey` honeypot, and `_url`. `_cc` and `_captcha` are not sent. If `_honey` is non-empty, the API returns success and does not store or email the submission.
 
@@ -59,7 +59,7 @@ Vercel project settings:
 
 The repository-root `vercel.json` fails the build on purpose if the Root Directory is left as the repo root, so the marketing site cannot be published on the API host.
 
-Create the Blob store as **private** and connect it to this Vercel project. Vercel then injects `BLOB_READ_WRITE_TOKEN`. Leads are stored at `leads/YYYY/MM/<ISO timestamp>-<random>.json`. If the store rejects private access, the function retries once as a public blob with an unguessable suffix and does not publish a listing. Success is returned only after the blob write. If email fails after that, the response is still `{ success: true, id, emailed: false }` and the failure is written back onto the blob (or a `.email-error.json` sidecar).
+Create the Blob store as **private** and connect it to this Vercel project. Vercel then injects `BLOB_READ_WRITE_TOKEN`. Leads are stored at `leads/YYYY/MM/<ISO timestamp>-<random>.json`. If the store rejects private access, the function retries once as a public blob with an unguessable suffix and does not publish a listing. Success is returned only after the blob write. A sent email responds `{ success: true, id, emailed: true, emailId }` (`emailId` is the Resend message id). If email fails after the blob write, the response is `{ success: true, id, emailed: false }` and the failure is written back onto the blob (or a `.email-error.json` sidecar).
 
 List recent leads (for the owner's assistant):
 
