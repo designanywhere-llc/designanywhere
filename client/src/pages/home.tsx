@@ -179,6 +179,15 @@ function CyclingServiceCard({ service }: { service: typeof services[0] }) {
 }
 
 export default function Home() {
+  useEffect(() => {
+    const id = window.location.hash.slice(1);
+    if (!id) return;
+    const scroll = () => document.getElementById(id)?.scrollIntoView();
+    scroll();
+    const frame = requestAnimationFrame(scroll);
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
@@ -237,7 +246,7 @@ export default function Home() {
       </section>
 
       {/* Services Section — dark background so "Our Services" reads in white */}
-      <section id="services" className="py-24 bg-slate-800">
+      <section id="services" className="scroll-mt-20 py-24 bg-slate-800">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <span className="text-sm font-semibold tracking-[0.2em] uppercase text-blue-400 mb-3 block">
