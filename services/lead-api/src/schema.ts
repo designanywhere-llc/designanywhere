@@ -18,6 +18,11 @@ const estimateLineSchema = z
 
 export const estimateSchema = z
   .object({
+    /** Plain-language project description from the pricing-page scheduler. */
+    description: z.string().max(5_000).optional(),
+    /** Per-service hours from Schedule your project. */
+    services: z.array(estimateLineSchema).max(40).optional(),
+    /** Same line shape, used by older quote payloads. */
     lines: z.array(estimateLineSchema).max(40).optional(),
     total: z.number().finite().optional(),
     anyHours: z.boolean().optional(),

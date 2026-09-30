@@ -216,6 +216,16 @@ export default function Home() {
             Design Anywhere is a premier remote engineering team, offering cutting-edge solutions in mechanical design. We bring expert-level CAD, prototyping, and manufacturing knowledge directly to your project — wherever you are.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
+            <Link href="/pricing#project-estimator">
+              <Button
+                size="lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white border-0 px-8"
+                data-testid="button-hero-estimate-project"
+              >
+                Estimate Your Project
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
             <Link href="/contact">
               <Button
                 size="lg"
@@ -342,18 +352,30 @@ export default function Home() {
             Ready to Bring Your Design to Life?
           </h2>
           <p className="text-slate-600 text-lg mb-8 max-w-xl mx-auto">
-            Reach out today and let's discuss how Design Anywhere can support your next engineering project.
+            Describe your project for a ballpark, or reach out and we'll talk through the scope. Your final quote follows a free consultation.
           </p>
-          <Link href="/contact">
-            <Button
-              size="lg"
-              className="bg-blue-600 hover:bg-blue-700 text-white border-0 px-10"
-              data-testid="button-final-cta-get-in-touch"
-            >
-              Get in Touch
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-          </Link>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Link href="/pricing#project-estimator">
+              <Button
+                size="lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white border-0 px-10"
+                data-testid="button-final-cta-estimate"
+              >
+                Estimate Your Project
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+            <Link href="/contact">
+              <Button
+                size="lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white border-0 px-10"
+                data-testid="button-final-cta-get-in-touch"
+              >
+                Get in Touch
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
     </div>

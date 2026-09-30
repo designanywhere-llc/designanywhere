@@ -44,6 +44,22 @@ The JSON body includes the form fields, `type: "contact"`, a hidden `_honey` hon
 
 The Express `POST /api/contact` + Resend path is still in the repo for local/legacy use. The static site does not call it.
 
+## Project estimator
+
+The pricing page (`/pricing`) turns a plain-language project description into a ballpark by service and hours. It runs in the browser. There is no API key and no language-model call.
+
+Phrase lists, hour ranges, and the complexity adjustments (part count, size, production, metal, PDM setup, “CAD only”) live in [`client/src/lib/projectEstimateRules.ts`](client/src/lib/projectEstimateRules.ts). That file explains how a match becomes hours. Dollar rates stay in `ESTIMATE_SERVICES` inside [`client/src/lib/estimate.ts`](client/src/lib/estimate.ts) — the estimator reads them from there.
+
+After you change a phrase or an hour range:
+
+```bash
+npm run test:quote
+```
+
+The samples in `client/src/lib/projectEstimate.test.ts` are the descriptions and ranges the page is checked against. A description that matches nothing gets a small consultation package, and the page says the first conversation is free and the final quote comes after that.
+
+**Schedule your project** uses the same lead API as the contact form. A quote sends `type: "quote"` and an `estimate` object (`description`, `services` with each service’s hours, rate, and cost, and `total`), plus `name` and `_honey`. The API stores that object on the lead and includes the breakdown in the email. The `message` is also a plain-text copy, so the mailto fallback stays readable if the POST fails.
+
 ## Lead API
 
 Source: `services/lead-api`. It deploys on its own to `https://api.designanywhere.org` as `POST /api/lead` (plus an `OPTIONS` preflight). GitHub Pages does not build or upload it (`.github/workflows/pages.yml` ignores that directory).

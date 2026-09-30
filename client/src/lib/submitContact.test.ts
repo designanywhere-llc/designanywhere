@@ -292,4 +292,80 @@ describe("submitContactForm", () => {
   it("uses a 10 second default timeout", () => {
     assert.equal(CONTACT_SUBMIT_TIMEOUT_MS, 10_000);
   });
+
+  it("sends a quote with type, estimate, name, and a readable message", async () => {
+    const estimate = {
+      description: "Handheld kitchen gadget with a 3D printed prototype.",
+      services: [
+        {
+          id: "product-design",
+          label: "Product Design",
+          hours: 24,
+          rate: 85,
+          cost: 2040,
+        },
+      ],
+      total: 2040,
+    };
+    const quote = {
+      ...sample,
+      subject: "Schedule my project",
+      message: [
+        "Project description:",
+        estimate.description,
+        "",
+        "This is a ballpark. Your final quote follows a free consultation.",
+        "",
+        "Product Design: 24 hrs × $85/hr = $2,040",
+        "Estimated total: $2,040",
+        "Initial consultation: Free",
+      ].join("\n"),
+      type: "quote" as const,
+      estimate,
+    };
+
+    let body = "";
+    const sent = await submitContactForm(quote, {
+      honey: "",
+      pageUrl: "https://designanywhere.org/pricing",
+      openMailto: () => {},
+      fetchImpl: async (_url, init) => {
+        body = String(init?.body ?? "");
+        return jsonResponse(200, { success: true });
+      },
+    });
+    assert.deepEqual(sent, { status: "sent" });
+
+    const payload = JSON.parse(body) as Record<string, unknown>;
+    assert.equal(payload.name, "Ada Lovelace");
+    assert.equal(payload.email, quote.email);
+    assert.equal(payload.phone, quote.phone);
+    assert.equal(payload.service, quote.service);
+    assert.equal(payload.subject, "Schedule my project");
+    assert.equal(payload.type, "quote");
+    assert.equal(payload._honey, "");
+    assert.equal(payload._url, "https://designanywhere.org/pricing");
+    assert.equal("_cc" in payload, false);
+    assert.equal("_replyto" in payload, false);
+    assert.equal("_captcha" in payload, false);
+    assert.equal("_template" in payload, false);
+    assert.equal("_subject" in payload, false);
+    assert.deepEqual(payload.estimate, estimate);
+    assert.match(String(payload.message), /Handheld kitchen gadget/);
+    assert.match(String(payload.message), /Product Design: 24 hrs/);
+    assert.match(String(payload.message), /Estimated total: \$2,040/);
+    assert.match(String(payload.message), /free consultation/);
+
+    const opened: string[] = [];
+    const failed = await submitContactForm(quote, {
+      pageUrl: "https://designanywhere.org/pricing",
+      openMailto: (href) => opened.push(href),
+      fetchImpl: async () => jsonResponse(502, { success: false }),
+    });
+    assert.equal(failed.status, "mailto");
+    const parts = mailtoParts(opened[0] ?? "");
+    assert.match(parts.body ?? "", /Handheld kitchen gadget/);
+    assert.match(parts.body ?? "", /Estimated total: \$2,040/);
+    assert.match(parts.body ?? "", /Ada Lovelace/);
+  });
 });

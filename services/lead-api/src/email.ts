@@ -39,11 +39,9 @@ function oneLine(value: string): string {
   return value.replace(/[\r\n]+/g, " ").trim();
 }
 
-function estimatePlain(estimate: LeadRequest["estimate"]): string | null {
-  if (!estimate) return null;
-  const lines = (estimate.lines ?? []) as EstimateLine[];
+function formatEstimateLines(items: EstimateLine[]): string[] {
   const rows: string[] = [];
-  for (const line of lines) {
+  for (const line of items) {
     const label = (line.label || line.id || "").trim();
     const bits = [
       label,
@@ -53,6 +51,16 @@ function estimatePlain(estimate: LeadRequest["estimate"]): string | null {
     ].filter(Boolean);
     if (bits.length) rows.push(`- ${bits.join(" · ")}`);
   }
+  return rows;
+}
+
+function estimatePlain(estimate: LeadRequest["estimate"]): string | null {
+  if (!estimate) return null;
+  const fromLines = formatEstimateLines(estimate.lines ?? []);
+  const fromServices = formatEstimateLines(estimate.services ?? []);
+  const rows = fromLines.length > 0 ? fromLines : fromServices;
+  const description = estimate.description?.trim();
+  if (description) rows.unshift(description);
   if (typeof estimate.total === "number") rows.push(`Total: $${estimate.total}`);
   return rows.length ? rows.join("\n") : null;
 }

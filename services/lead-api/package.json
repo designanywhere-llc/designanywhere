@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Vercel function only. Set the Vercel project Root Directory to services/lead-api so the GitHub Pages site is not built.",
+  "scripts": {
+    "test": "node ../../node_modules/tsx/dist/cli.mjs --test src/lead.test.ts && node ../../scripts/smoke-lead-api.mjs"
+  },
   "dependencies": {
     "@vercel/blob": "2.8.0",
     "resend": "6.9.3",

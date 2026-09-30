@@ -139,6 +139,72 @@ describe("leadRequestSchema", () => {
 
     assert.equal(leadRequestSchema.safeParse({ ...validContact, type: "other" }).success, false);
   });
+
+  it("keeps the schedule-button estimate, including services and description", () => {
+    const parsed = leadRequestSchema.safeParse({
+      name: "Ada Lovelace",
+      firstName: "Ada",
+      lastName: "Lovelace",
+      email: "ada@example.com",
+      phone: "555-0100",
+      service: "Product Design",
+      subject: "Schedule my project",
+      message: "Project description:\nHandheld gadget",
+      type: "quote",
+      estimate: {
+        description: "Handheld gadget",
+        services: [
+          { id: "product-design", label: "Product Design", hours: 24, rate: 85, cost: 2040 },
+        ],
+        total: 2040,
+      },
+      _honey: "",
+      _url: "https://designanywhere.org/pricing",
+    });
+    assert.equal(parsed.success, true);
+    if (!parsed.success) return;
+    assert.equal(parsed.data.type, "quote");
+    assert.equal(parsed.data.estimate?.description, "Handheld gadget");
+    assert.equal(parsed.data.estimate?.total, 2040);
+    assert.equal(parsed.data.estimate?.services?.[0]?.label, "Product Design");
+    assert.equal(parsed.data.estimate?.services?.[0]?.hours, 24);
+    assert.equal(parsed.data.estimate?.services?.[0]?.rate, 85);
+    assert.equal(parsed.data.estimate?.services?.[0]?.cost, 2040);
+  });
+
+  it("rejects an oversized estimate without raising the size limits", () => {
+    const longDescription = leadRequestSchema.safeParse({
+      name: "Ada",
+      email: "ada@example.com",
+      message: "Hello there.",
+      type: "quote",
+      estimate: { description: "A".repeat(5001), total: 1 },
+    });
+    assert.equal(longDescription.success, false);
+
+    const tooManyServices = leadRequestSchema.safeParse({
+      name: "Ada",
+      email: "ada@example.com",
+      message: "Hello there.",
+      type: "quote",
+      estimate: {
+        total: 1,
+        services: Array.from({ length: 41 }, () => ({ label: "Part", hours: 1 })),
+      },
+    });
+    assert.equal(tooManyServices.success, false);
+
+    const tooLarge = leadRequestSchema.safeParse({
+      name: "Ada",
+      email: "ada@example.com",
+      message: "Hello there.",
+      estimate: { total: 1, extra: "x".repeat(20_001) },
+    });
+    assert.equal(tooLarge.success, false);
+    if (!tooLarge.success) {
+      assert.equal(tooLarge.error.issues[0]?.message, "Estimate is too large.");
+    }
+  });
 });
 
 describe("handleLead", () => {
@@ -451,5 +517,69 @@ describe("handleLead", () => {
     assert.equal(stored.estimate?.total, 100);
     assert.equal(emails[0]?.subject, "New lead: Machine & Tooling Design — Grace Hopper");
     assert.match(emails[0]?.html ?? "", /Tooling &lt;b&gt;/);
+  });
+
+  it("stores a schedule-button quote and emails the service breakdown", async () => {
+    const estimate = {
+      description: "Handheld gadget <draft>",
+      services: [
+        { id: "product-design", label: "Product Design", hours: 24, rate: 85, cost: 2040 },
+        { id: "prototype-dfm", label: "Prototype & DFM", hours: 24, rate: 85, cost: 2040 },
+      ],
+      total: 4080,
+    };
+    const { deps, blobs, emails } = harness();
+    const response = await read(
+      await handleLead(
+        post(
+          {
+            name: "Ada Lovelace",
+            firstName: "Ada",
+            lastName: "Lovelace",
+            email: "ada@example.com",
+            phone: "555-0100",
+            service: "Product Design",
+            subject: "Schedule my project",
+            message: "Project description:\nHandheld gadget\n\nEstimated total: $4,080",
+            type: "quote",
+            estimate,
+            _honey: "",
+            _url: "https://designanywhere.org/pricing",
+          },
+          { "X-Forwarded-For": "203.0.113.77" },
+        ),
+        deps,
+      ),
+    );
+    assert.equal(response.status, 200);
+    assert.equal(response.json.success, true);
+
+    const stored = JSON.parse(blobs[0]?.body ?? "{}") as {
+      type?: string;
+      estimate?: {
+        description?: string;
+        total?: number;
+        services?: Array<{ id?: string; hours?: number; rate?: number; cost?: number }>;
+      };
+    };
+    assert.equal(stored.type, "quote");
+    assert.equal(stored.estimate?.description, estimate.description);
+    assert.equal(stored.estimate?.total, 4080);
+    assert.equal(stored.estimate?.services?.length, 2);
+    assert.equal(stored.estimate?.services?.[0]?.id, "product-design");
+    assert.equal(stored.estimate?.services?.[0]?.hours, 24);
+    assert.equal(stored.estimate?.services?.[0]?.rate, 85);
+    assert.equal(stored.estimate?.services?.[1]?.cost, 2040);
+
+    const text = emails[0]?.text ?? "";
+    assert.match(text, /Handheld gadget <draft>/);
+    assert.match(text, /Product Design · 24 h · \$85\/h · \$2040/);
+    assert.match(text, /Prototype & DFM · 24 h · \$85\/h · \$2040/);
+    assert.match(text, /Total: \$4080/);
+    assert.match(text, /Estimated total: \$4,080/);
+    const html = emails[0]?.html ?? "";
+    assert.match(html, /Handheld gadget &lt;draft&gt;/);
+    assert.match(html, /Product Design/);
+    assert.equal(html.includes("<draft>"), false);
   });
 });
