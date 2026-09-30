@@ -158,7 +158,7 @@ export default function Contact() {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Jordan"
+                              placeholder="First name"
                               data-testid="input-first-name"
                               className="bg-white border-slate-200 focus:border-blue-400 focus:ring-blue-400"
                               {...field}
@@ -178,7 +178,7 @@ export default function Contact() {
                           </FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Smith"
+                              placeholder="Last name"
                               data-testid="input-last-name"
                               className="bg-white border-slate-200 focus:border-blue-400 focus:ring-blue-400"
                               {...field}
@@ -203,7 +203,7 @@ export default function Contact() {
                           <FormControl>
                             <Input
                               type="email"
-                              placeholder="jordan@company.com"
+                              placeholder="you@company.com"
                               data-testid="input-email"
                               className="bg-white border-slate-200 focus:border-blue-400 focus:ring-blue-400"
                               {...field}
