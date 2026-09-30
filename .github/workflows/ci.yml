@@ -26,3 +26,5 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
+      - name: Test quote estimator
+        run: npm run test:quote
