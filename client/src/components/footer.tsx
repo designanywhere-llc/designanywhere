@@ -32,7 +32,7 @@ export function Footer() {
 
             <div className="flex items-center gap-3 mt-1">
               <a
-                href="https://x.com/designanywhere"
+                href="https://x.com/IDesignAnywhere"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Design Anywhere on X"
