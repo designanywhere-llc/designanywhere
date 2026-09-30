@@ -31,9 +31,11 @@ The `/contact` form POSTs to **[FormSubmit](https://formsubmit.co)** — no Expr
 | **CC** | `jordanbell@designanywhere.org` (FormSubmit supports `_cc`, not BCC) |
 | **Reply-To** | the visitor's email |
 
-A visible `engineering@designanywhere.org` mailto remains on the form as a fallback.
+If that POST fails — non-OK status, non-JSON body, `success` not true, a network error, or no response within about 10 seconds — the page opens the visitor's email app with a prefilled message to `engineering@designanywhere.org` (CC `jordanbell@designanywhere.org`) using their name, email, phone, service, subject, and message. The form stays on screen with a link to open that email again and a plain display of the address. Very long messages are shortened so the mailto link stays usable. A JSON `message` that mentions activation is treated as received, not as a failure.
 
-**First submission:** FormSubmit emails `engineering@` a one-time confirmation link. Click it before leads will forward. After that, inbound messages land in engineering@ (CC jordanbell@).
+The POST URL is the `CONTACT_ENDPOINT` constant in `client/src/lib/submitContact.ts`. Swap that constant for a Resend-backed serverless endpoint later; the JSON body (including `_honey` and `_url`) stays the same. A hidden `_honey` honeypot is included so bots that fill every field can be dropped.
+
+**First submission:** FormSubmit emails `engineering@` a one-time confirmation link. Click it before leads will forward. After that, inbound messages land in engineering@ (CC jordanbell@). Until that link is clicked, a visitor whose POST comes back with an activation message still sees the form as received.
 
 **Later:** Namecheap-hosted mailbox for `engineering@` / `leads@` is planned; FormSubmit keeps working as a free forwarder until then. **Sales Bot** will monitor these leads.
 
@@ -45,6 +47,7 @@ The Express `POST /api/contact` + Resend path is still in the repo for local/leg
 npm install
 npm run dev            # legacy: Vite + Express (Resend API still mounted)
 npm run check          # tsc
+npm test               # contact form submit + mailto fallback
 npm run build:client   # static marketing site → dist/public
 npm run preview        # preview the Vite client build
 npm run build          # full client + Express bundle (local / Replit leftover)

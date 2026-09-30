@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
+    "test": "tsx --test client/src/lib/submitContact.test.ts",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
