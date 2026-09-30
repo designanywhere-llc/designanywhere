@@ -22,6 +22,8 @@ jobs:
         run: npm run check
       - name: Test
         run: npm test
+      - name: Import the lead API under Node ESM
+        run: node scripts/smoke-lead-api.mjs
       - name: Build
         run: npm run build
         env:
