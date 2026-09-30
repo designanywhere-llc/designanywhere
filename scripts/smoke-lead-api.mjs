@@ -37,11 +37,12 @@ try {
   assert.equal(entrySource.includes("from '../src/lead'"), false);
 
   const mod = await import(pathToFileURL(entryPath).href);
-  assert.equal(typeof mod.default, "function");
+  assert.equal(mod.default, undefined, "api/lead.js must not have a default export");
+  assert.equal(/\bexport\s+default\b/.test(entrySource), false);
   assert.equal(typeof mod.POST, "function");
   assert.equal(typeof mod.OPTIONS, "function");
 
-  const honeypot = await mod.default(
+  const honeypot = await mod.POST(
     new Request("https://api.designanywhere.org/api/lead", {
       method: "POST",
       headers: {

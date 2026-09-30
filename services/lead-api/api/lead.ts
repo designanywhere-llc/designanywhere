@@ -5,15 +5,12 @@ function deps() {
   return createRuntimeDeps(process.env);
 }
 
-/** Web Request handler. Vercel calls POST/OPTIONS; the Node ESM smoke test calls this default. */
-export default function leadHandler(request: Request): Promise<Response> {
+// Named web-handler exports only. A default-exported function is a legacy
+// (req, res) handler on Vercel and hangs until the invocation times out.
+export function POST(request: Request): Promise<Response> {
   return handleLead(request, deps());
 }
 
-export function POST(request: Request): Promise<Response> {
-  return leadHandler(request);
-}
-
 export function OPTIONS(request: Request): Promise<Response> {
-  return leadHandler(request);
+  return handleLead(request, deps());
 }
