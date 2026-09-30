@@ -86,7 +86,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <a href="#services" className="text-slate-400 hover:text-white text-sm transition-colors">
+                <a
+                  href={`${import.meta.env.BASE_URL}#services`}
+                  className="text-slate-400 hover:text-white text-sm transition-colors"
+                  data-testid="link-footer-services"
+                >
                   Services
                 </a>
               </li>

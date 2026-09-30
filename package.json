@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "test:quote": "tsx --test client/src/lib/estimate.test.ts shared/contact.test.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

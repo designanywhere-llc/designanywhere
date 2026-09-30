@@ -3,15 +3,13 @@ import { Link } from "wouter";
 import { DollarSign, Calculator } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-
-const SERVICE_OPTIONS = [
-  { id: "product-design", label: "Product Design", rate: 85 },
-  { id: "prototype-dfm", label: "Prototype & DFM", rate: 85 },
-  { id: "machine-tooling", label: "Machine & Tooling Design", rate: 100 },
-  { id: "cad-3d", label: "3D Modeling & CAD Services", rate: 100 },
-  { id: "pdm-plm", label: "PDM/PLM Creation", rate: 100 },
-  { id: "manufacturing", label: "Manufacturing Solutions Consultation", rate: 150, note: "Travel costs not included" },
-];
+import {
+  ESTIMATE_SERVICES,
+  MAX_ESTIMATE_HOURS,
+  buildEstimate,
+  formatHours,
+  formatUsd,
+} from "@/lib/estimate";
 
 export default function Pricing() {
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
@@ -27,14 +25,8 @@ export default function Pricing() {
     setServiceHours((prev) => ({ ...prev, [id]: value }));
   };
 
-  const selectedItems = SERVICE_OPTIONS.filter((s) => selectedServices.includes(s.id));
-  const totalCost = selectedItems.reduce((sum, s) => {
-    const h = parseFloat(serviceHours[s.id] || "0") || 0;
-    return sum + s.rate * h;
-  }, 0);
-
-  const anyHours = selectedItems.some((s) => (parseFloat(serviceHours[s.id] || "0") || 0) > 0);
-  const hasResult = selectedItems.length > 0;
+  const estimate = buildEstimate(selectedServices, serviceHours);
+  const hasResult = estimate.lines.length > 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -73,52 +65,70 @@ export default function Pricing() {
           </div>
 
           <div className="divide-y divide-slate-50">
-            {SERVICE_OPTIONS.map((service) => {
+            {ESTIMATE_SERVICES.map((service) => {
               const isSelected = selectedServices.includes(service.id);
+              const line = estimate.lines.find((item) => item.id === service.id);
               return (
                 <label
                   key={service.id}
                   htmlFor={`service-${service.id}`}
-                  className={`grid grid-cols-[1fr_auto] gap-4 items-center px-8 py-4 cursor-pointer transition-colors ${
+                  className={`block px-8 py-4 cursor-pointer transition-colors ${
                     isSelected ? "bg-slate-50" : "hover:bg-slate-50/60"
                   }`}
                   data-testid={`label-service-${service.id}`}
                 >
-                  {/* Checkbox + Name */}
-                  <div className="flex items-start gap-3 min-w-0">
-                    <Checkbox
-                      id={`service-${service.id}`}
-                      checked={isSelected}
-                      onCheckedChange={() => toggleService(service.id)}
-                      data-testid={`checkbox-service-${service.id}`}
-                      className="mt-0.5 border-slate-300 data-[state=checked]:bg-slate-700 data-[state=checked]:border-slate-700 flex-shrink-0"
-                    />
-                    <div className="min-w-0">
-                      <span className={`text-sm font-medium block ${isSelected ? "text-slate-900" : "text-slate-600"}`}>
-                        {service.label}
-                      </span>
-                      {service.note && (
-                        <span className="text-slate-400 text-xs">{service.note}</span>
-                      )}
+                  <div className="grid grid-cols-[1fr_auto] gap-4 items-center">
+                    {/* Checkbox + Name */}
+                    <div className="flex items-start gap-3 min-w-0">
+                      <Checkbox
+                        id={`service-${service.id}`}
+                        checked={isSelected}
+                        onCheckedChange={() => toggleService(service.id)}
+                        data-testid={`checkbox-service-${service.id}`}
+                        className="mt-0.5 border-slate-300 data-[state=checked]:bg-slate-700 data-[state=checked]:border-slate-700 flex-shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <span className={`text-sm font-medium block ${isSelected ? "text-slate-900" : "text-slate-600"}`}>
+                          {service.label}
+                        </span>
+                        {service.note && (
+                          <span className="text-slate-400 text-xs">{service.note}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Hours Input */}
+                    <div className="w-24" onClick={(e) => e.preventDefault()}>
+                      <Input
+                        type="number"
+                        min="0"
+                        max={MAX_ESTIMATE_HOURS}
+                        step="0.5"
+                        placeholder="0"
+                        value={serviceHours[service.id] || ""}
+                        onChange={(e) => setHours(service.id, e.target.value)}
+                        disabled={!isSelected}
+                        aria-invalid={line?.error ? true : undefined}
+                        aria-describedby={line?.error ? `hours-error-${service.id}` : undefined}
+                        data-testid={`input-hours-${service.id}`}
+                        className={`text-center text-sm border-slate-200 focus:border-slate-400 focus:ring-slate-400 ${
+                          line?.error ? "border-red-400 focus:border-red-500" : ""
+                        } ${
+                          !isSelected ? "bg-slate-50 text-slate-300 cursor-not-allowed" : "bg-white"
+                        }`}
+                      />
                     </div>
                   </div>
-
-                  {/* Hours Input */}
-                  <div className="w-24" onClick={(e) => e.preventDefault()}>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.5"
-                      placeholder="0"
-                      value={serviceHours[service.id] || ""}
-                      onChange={(e) => setHours(service.id, e.target.value)}
-                      disabled={!isSelected}
-                      data-testid={`input-hours-${service.id}`}
-                      className={`text-center text-sm border-slate-200 focus:border-slate-400 focus:ring-slate-400 ${
-                        !isSelected ? "bg-slate-50 text-slate-300 cursor-not-allowed" : "bg-white"
-                      }`}
-                    />
-                  </div>
+                  {line?.error && (
+                    <span
+                      id={`hours-error-${service.id}`}
+                      role="alert"
+                      data-testid={`error-hours-${service.id}`}
+                      className="block text-red-600 text-xs mt-2 pl-7"
+                    >
+                      {line.error}
+                    </span>
+                  )}
                 </label>
               );
             })}
@@ -153,33 +163,35 @@ export default function Pricing() {
                 </div>
 
                 {/* Selected services */}
-                {selectedItems.map((s) => {
-                  const h = parseFloat(serviceHours[s.id] || "0") || 0;
-                  const lineCost = s.rate * h;
-                  return (
-                    <div key={s.id} className="flex items-center justify-between">
-                      <div>
-                        <span className="text-slate-200 text-sm font-medium">{s.label}</span>
-                        {h > 0 && (
+                {estimate.lines.map((line) => (
+                    <div key={line.id} className="flex items-center justify-between gap-4">
+                      <div className="min-w-0">
+                        <span className="text-slate-200 text-sm font-medium">{line.label}</span>
+                        {line.hours != null && line.hours > 0 && (
                           <span className="text-slate-400 text-xs ml-2">
-                            {h} hrs × ${s.rate}/hr
+                            {formatHours(line.hours)} hrs × {formatUsd(line.rate)}/hr
                           </span>
                         )}
                       </div>
                       <span
-                        className="text-white text-sm font-bold"
-                        data-testid={`cost-service-${s.id}`}
+                        className="text-white text-sm font-bold shrink-0"
+                        data-testid={`cost-service-${line.id}`}
                       >
-                        {h > 0 ? `$${lineCost.toLocaleString()}` : "—"}
+                        {line.cost != null ? formatUsd(line.cost) : "—"}
                       </span>
                     </div>
-                  );
-                })}
+                ))}
               </div>
 
-              <div className="border-t border-slate-600 pt-4 flex items-end justify-between">
+              {estimate.hasInvalid && (
+                <p className="text-amber-200 text-xs mb-4" data-testid="estimate-hours-warning">
+                  Lines with invalid hours are left out of the total.
+                </p>
+              )}
+
+              <div className="border-t border-slate-600 pt-4 flex items-end justify-between gap-4">
                 <p className="text-slate-400 text-sm">
-                  {selectedItems.length} service{selectedItems.length > 1 ? "s" : ""} selected
+                  {estimate.lines.length} service{estimate.lines.length > 1 ? "s" : ""} selected
                 </p>
                 <div className="text-right">
                   <p className="text-slate-400 text-xs uppercase tracking-widest mb-1">Estimated Total</p>
@@ -187,7 +199,7 @@ export default function Pricing() {
                     className="text-4xl font-bold text-white"
                     data-testid="text-estimated-cost"
                   >
-                    {anyHours ? `$${totalCost.toLocaleString()}` : "—"}
+                    {estimate.anyHours ? formatUsd(estimate.total) : "—"}
                   </p>
                 </div>
               </div>
