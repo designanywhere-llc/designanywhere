@@ -51,7 +51,7 @@ client/public/images/
 
 ## Contact Form
 
-The contact form posts to `POST /api/contact`, which emails **To** `engineering@designanywhere.org` and **Bcc** `jordanbell@designanywhere.org` via Resend (`RESEND_API_KEY`). From address defaults to Resend's sandbox `onboarding@resend.dev`; use `leads@designanywhere.org` after verifying the domain. A mailto fallback to `engineering@designanywhere.org` remains on the page. See `README.md`.
+The public contact form posts to `https://api.designanywhere.org/api/lead` (Vercel function in `services/lead-api`). Leads are stored in Vercel Blob, then emailed **To** `engineering@designanywhere.org` and **Bcc** `jordanbell@designanywhere.org` via Resend. A mailto fallback remains on the page. The Express `POST /api/contact` path is local/legacy only. See `README.md`.
 
 ## Deployment
 

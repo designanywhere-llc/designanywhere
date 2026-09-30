@@ -6,6 +6,13 @@ name: Deploy GitHub Pages
 on:
   push:
     branches: [main]
+    # The lead API is deployed by a separate Vercel project
+    # (services/lead-api → api.designanywhere.org). API-only pushes
+    # must not rebuild or upload the Pages site.
+    paths-ignore:
+      - "services/lead-api/**"
+      - "scripts/**"
+      - "vercel.json"
   workflow_dispatch:
 
 permissions:

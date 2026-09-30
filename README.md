@@ -21,23 +21,26 @@ See [`client/public/images/services/README.md`](client/public/images/services/RE
 
 ## Contact form
 
-The `/contact` form POSTs to **[FormSubmit](https://formsubmit.co)** — no Express server and no API keys:
+The `/contact` form POSTs JSON to the lead API:
 
-`https://formsubmit.co/ajax/engineering@designanywhere.org`
+`https://api.designanywhere.org/api/lead`
+
+That URL is the `CONTACT_ENDPOINT` constant in `client/src/lib/submitContact.ts`. The static site stays on GitHub Pages. The API is a separate Vercel project (see [Lead API](#lead-api)).
+
+The function writes the lead to Vercel Blob first, then emails it with Resend:
 
 | Field | Value |
 | --- | --- |
 | **To** | `engineering@designanywhere.org` |
-| **CC** | `jordanbell@designanywhere.org` (FormSubmit supports `_cc`, not BCC) |
+| **Bcc** | `jordanbell@designanywhere.org` |
+| **From** | `Design Anywhere <leads@contact.designanywhere.org>` |
 | **Reply-To** | the visitor's email |
 
-If that POST fails — non-OK status, non-JSON body, `success` not true, a network error, or no response within about 10 seconds — the page opens the visitor's email app with a prefilled message to `engineering@designanywhere.org` (CC `jordanbell@designanywhere.org`) using their name, email, phone, service, subject, and message. The form stays on screen with a link to open that email again and a plain display of the address. Very long messages are shortened so the mailto link stays usable. A JSON `message` that mentions activation is treated as received, not as a failure.
+If that POST fails — non-OK status, non-JSON body, `success` not `true`, a network error, or no response within about 10 seconds — the page opens the visitor's email app with a prefilled message to `engineering@designanywhere.org` (CC `jordanbell@designanywhere.org`) using their name, email, phone, service, subject, and message. Mailto has no Bcc field, so the fallback still uses CC. The form stays on screen with a link to open that email again and a plain display of the address. Very long messages are shortened so the mailto link stays usable.
 
-The POST URL is the `CONTACT_ENDPOINT` constant in `client/src/lib/submitContact.ts`. Swap that constant for a Resend-backed serverless endpoint later; the JSON body (including `_honey` and `_url`) stays the same. A hidden `_honey` honeypot is included so bots that fill every field can be dropped.
+`{ success: true, id, emailed: true, emailId }` counts as received. `{ success: true, id, emailed: false }` also counts as received: the lead was stored but Resend failed. A JSON `message` that mentions activation is still treated as received so an old FormSubmit confirmation body is not shown as a failure.
 
-**First submission:** FormSubmit emails `engineering@` a one-time confirmation link. Click it before leads will forward. After that, inbound messages land in engineering@ (CC jordanbell@). Until that link is clicked, a visitor whose POST comes back with an activation message still sees the form as received.
-
-**Later:** Namecheap-hosted mailbox for `engineering@` / `leads@` is planned; FormSubmit keeps working as a free forwarder until then. **Sales Bot** will monitor these leads.
+The JSON body includes the form fields, `type: "contact"`, a hidden `_honey` honeypot, and `_url`. `_cc` and `_captcha` are not sent. If `_honey` is non-empty, the API returns success and does not store or email the submission.
 
 The Express `POST /api/contact` + Resend path is still in the repo for local/legacy use. The static site does not call it.
 
@@ -55,7 +58,48 @@ npm run test:quote
 
 The samples in `client/src/lib/projectEstimate.test.ts` are the descriptions and ranges the page is checked against. A description that matches nothing gets a small consultation package, and the page says the first conversation is free and the final quote comes after that.
 
-**Schedule your project** uses the same submit path as the contact form (`CONTACT_ENDPOINT` in `client/src/lib/submitContact.ts`). A quote adds `type: "quote"` and an `estimate` object (`description`, per-service `hours` and `rate`, and `total`) on top of the existing fields, including `name` and `_honey`. The `message` is also a plain-text copy of the estimate, so the email is readable if the extra fields are stripped. If the POST fails, the visitor’s mail app opens with that same text.
+**Schedule your project** uses the same lead API as the contact form. A quote sends `type: "quote"` and an `estimate` object (`description`, `services` with each service’s hours, rate, and cost, and `total`), plus `name` and `_honey`. The API stores that object on the lead and includes the breakdown in the email. The `message` is also a plain-text copy, so the mailto fallback stays readable if the POST fails.
+
+## Lead API
+
+Source: `services/lead-api`. It deploys on its own to `https://api.designanywhere.org` as `POST /api/lead` (plus an `OPTIONS` preflight). GitHub Pages does not build or upload it (`.github/workflows/pages.yml` ignores that directory).
+
+Vercel project settings:
+
+| Setting | Value |
+| --- | --- |
+| **Root Directory** | `services/lead-api` |
+| **Framework Preset** | Other |
+| **Build Command** | empty — this package has no build script. Do not use the repository `npm run build` or `npm run build:client`. |
+| **Output Directory** | empty — no static output. Do not set `dist`, `dist/public`, or `public`. |
+
+The repository-root `vercel.json` fails the build on purpose if the Root Directory is left as the repo root, so the marketing site cannot be published on the API host.
+
+Create the Blob store as **private** and connect it to this Vercel project. Vercel then injects `BLOB_READ_WRITE_TOKEN`. Leads are stored at `leads/YYYY/MM/<ISO timestamp>-<random>.json`. If the store rejects private access, the function retries once as a public blob with an unguessable suffix and does not publish a listing. Success is returned only after the blob write. A sent email responds `{ success: true, id, emailed: true, emailId }` (`emailId` is the Resend message id). If email fails after the blob write, the response is `{ success: true, id, emailed: false }` and the failure is written back onto the blob (or a `.email-error.json` sidecar).
+
+List recent leads (for the owner's assistant):
+
+```bash
+BLOB_READ_WRITE_TOKEN=... npm run leads:list
+npm run leads:list -- --limit 20
+```
+
+### Environment variables
+
+Set these on the **Vercel** project. Do not commit secret values. GitHub Pages does not read them.
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `RESEND_API_KEY` | Yes, to send mail | From the Resend dashboard. `contact.designanywhere.org` is the verified sending domain. |
+| `CONTACT_FROM_EMAIL` | No | Default `Design Anywhere <leads@contact.designanywhere.org>`. |
+| `CONTACT_TO_EMAIL` | No | Default `engineering@designanywhere.org`. |
+| `CONTACT_BCC_EMAIL` | No | Default `jordanbell@designanywhere.org`. |
+| `CONTACT_ALLOWED_ORIGIN` | No | Comma-separated. Default `https://designanywhere.org,https://www.designanywhere.org`. |
+| `BLOB_READ_WRITE_TOKEN` | Injected | Set automatically when a Blob store is connected to the project. |
+
+`http://localhost:5173` is also allowed when `NODE_ENV` is not `production`. When `CONTACT_ALLOWED_ORIGIN` is set, it replaces the default list (localhost in non-production is still added).
+
+The legacy local Express server still reads `RESEND_API_KEY`, `CONTACT_FROM_EMAIL`, `CONTACT_TO_EMAIL`, and `CONTACT_BCC_EMAIL` for `POST /api/contact`. Its From default remains the Resend sandbox sender.
 
 ## Scripts
 
@@ -63,7 +107,8 @@ The samples in `client/src/lib/projectEstimate.test.ts` are the descriptions and
 npm install
 npm run dev            # legacy: Vite + Express (Resend API still mounted)
 npm run check          # tsc
-npm test               # contact form submit + mailto fallback
+npm test               # contact form submit, mailto fallback, and lead API
+npm run leads:list     # list recent lead blobs (needs BLOB_READ_WRITE_TOKEN)
 npm run build:client   # static marketing site → dist/public
 npm run preview        # preview the Vite client build
 npm run build          # full client + Express bundle (local / Replit leftover)
@@ -94,15 +139,6 @@ Leave MX and TXT records for iCloud mail unchanged. After DNS points at GitHub, 
 
 ## Required secrets
 
-**None for GitHub Pages or the contact form.** FormSubmit is a free email forwarder.
+**None for GitHub Pages.** The contact form in the browser calls the public lead API; it does not embed keys.
 
-Express/Resend (optional, local only) still reads:
-
-| Variable | Required | Notes |
-| --- | --- | --- |
-| `RESEND_API_KEY` | Only for `POST /api/contact` | From the Resend dashboard. Unused on Pages. |
-| `CONTACT_FROM_EMAIL` | No | Defaults to the Resend sandbox sender. |
-| `CONTACT_TO_EMAIL` | No | Defaults to `engineering@designanywhere.org`. |
-| `CONTACT_BCC_EMAIL` | No | Defaults to `jordanbell@designanywhere.org`. |
-
-Copy `.env.example` for local Express. Never commit `.env`.
+The Vercel lead API needs the variables in [Lead API](#lead-api). Copy `.env.example` for local names. Never commit `.env`.

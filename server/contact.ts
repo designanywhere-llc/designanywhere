@@ -4,8 +4,9 @@ import { contactSchema } from "../shared/contact";
 
 /**
  * Legacy/local handler for POST /api/contact (Resend).
- * The GitHub Pages site submits via FormSubmit instead; this path is kept so
- * `npm run dev` / `npm start` still work.
+ * The GitHub Pages site posts to the Vercel function at
+ * https://api.designanywhere.org/api/lead. This path remains for
+ * `npm run dev` / `npm start`.
  */
 
 const WINDOW_MS = 15 * 60 * 1000;

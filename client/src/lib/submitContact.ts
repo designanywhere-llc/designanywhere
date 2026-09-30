@@ -25,15 +25,13 @@ export type ContactSubmission = ContactFormData & {
 
 /**
  * Where the contact form POSTs JSON.
- * Swap this single constant for a Resend-backed serverless endpoint later.
- * Keep the same JSON body from `buildContactPayload`.
+ * Served by the Vercel function in `services/lead-api` (`POST /api/lead`).
  */
-export const CONTACT_ENDPOINT =
-  "https://formsubmit.co/ajax/engineering@designanywhere.org";
+export const CONTACT_ENDPOINT = "https://api.designanywhere.org/api/lead";
 
 export const CONTACT_TO = "engineering@designanywhere.org";
 
-/** FormSubmit has `_cc` but no BCC field. jordanbell@ is CC'd on every lead. */
+/** Mailto fallback only. The API sends a real Bcc; mailto has no Bcc field. */
 export const CONTACT_CC = "jordanbell@designanywhere.org";
 
 /** Give up on the form backend and open the visitor's email app. */
@@ -48,7 +46,7 @@ export const MAX_MAILTO_LENGTH = 2000;
 const TRUNCATION_NOTE =
   "\n\n[Your message was shortened so it would fit in an email link. Please add anything that was cut off before you send.]";
 
-type FormSubmitResponse = {
+type ContactApiBody = {
   success?: string | boolean;
   message?: string;
 };
@@ -60,7 +58,7 @@ export type ContactSubmitResult =
 export type SubmitContactOptions = {
   /** Honeypot value. Bots fill this; people leave it empty. */
   honey?: string;
-  /** Page URL sent as FormSubmit `_url`. Defaults to `location.href`. */
+  /** Page URL sent as `_url`. Defaults to `location.href`. */
   pageUrl?: string;
   timeoutMs?: number;
   fetchImpl?: typeof fetch;
@@ -79,6 +77,7 @@ export function buildContactPayload(
   options: { honey?: string; pageUrl?: string } = {},
 ): Record<string, unknown> {
   const payload: Record<string, unknown> = {
+    type: data.type ?? "contact",
     name: `${data.firstName} ${data.lastName}`.trim().replace(/\s+/g, " "),
     firstName: data.firstName,
     lastName: data.lastName,
@@ -87,15 +86,9 @@ export function buildContactPayload(
     service: data.service,
     subject: data.subject,
     message: data.message,
-    _replyto: data.email,
-    _cc: CONTACT_CC,
-    _subject: contactSubjectLine(data),
-    _template: "table",
-    _captcha: "false",
     _honey: options.honey ?? "",
     _url: options.pageUrl ?? "",
   };
-  if (data.type) payload.type = data.type;
   if (data.estimate) payload.estimate = data.estimate;
   return payload;
 }
@@ -106,21 +99,21 @@ function mentionsActivation(message: unknown): boolean {
 
 /**
  * Decide whether the backend accepted the lead.
- * A JSON `message` that mentions activation counts as received: FormSubmit
- * uses that response while the form owner confirms the address, and it is
- * not a visitor-facing failure.
+ * `success: true` is received, including `{ emailed: true, emailId }` and
+ * `{ emailed: false }` after the lead was stored. A JSON `message` that mentions activation still counts as
+ * received so an old FormSubmit confirmation response is not a visitor failure.
  */
 export function interpretContactResponse(
   status: number,
   bodyText: string,
 ): "sent" | "failed" {
-  let payload: FormSubmitResponse | null = null;
+  let payload: ContactApiBody | null = null;
   const trimmed = bodyText.trim();
   if (trimmed) {
     try {
       const parsed: unknown = JSON.parse(trimmed);
       if (parsed && typeof parsed === "object") {
-        payload = parsed as FormSubmitResponse;
+        payload = parsed as ContactApiBody;
       }
     } catch {
       payload = null;
