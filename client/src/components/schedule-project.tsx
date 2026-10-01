@@ -213,7 +213,7 @@ export function ScheduleProject({
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Jordan"
+                        placeholder="First name"
                         autoComplete="given-name"
                         data-testid="input-schedule-first-name"
                         className="bg-white border-slate-200 focus:border-blue-400 focus:ring-blue-400"
@@ -234,7 +234,7 @@ export function ScheduleProject({
                     </FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="Smith"
+                        placeholder="Last name"
                         autoComplete="family-name"
                         data-testid="input-schedule-last-name"
                         className="bg-white border-slate-200 focus:border-blue-400 focus:ring-blue-400"

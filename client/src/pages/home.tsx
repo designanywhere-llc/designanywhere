@@ -25,7 +25,7 @@ const services = [
   {
     id: "machine-tooling",
     title: "Machine & Tooling Design",
-    description: "Custom machinery, tooling for existing machines, PLM Programming, assembly and quality/buy-off testing",
+    description: "Custom machinery, tooling for existing machines, PDM server and vault creation, assembly and quality/buy-off testing",
     images: serviceImageUrls("machine-tooling"),
     icon: Wrench,
   },
@@ -308,7 +308,7 @@ export default function Home() {
               <div className="space-y-5">
                 {[
                   { title: "Globally Accessible", description: "Work with world-class engineers regardless of your location" },
-                  { title: "SolidWorks Certified", description: "Professional CAD tools and GD&T expertise for every project" },
+                  { title: "CSWP Certified SolidWorks Professional", description: "Professional CAD tools and GD&T expertise for every project" },
                   { title: "Full-Cycle Support", description: "From initial concept through manufacturing-ready deliverables" },
                 ].map((item) => (
                   <div key={item.title} className="flex gap-4 items-start">
@@ -327,7 +327,7 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-6">
               {[
                 { value: "Budget", label: "Friendly Pricing" },
-                { value: "15+", label: "Years of Experience" },
+                { value: "12", label: "Years of Experience" },
                 { value: "Pro", label: "Service Quality" },
                 { value: "6", label: "Core Service Areas" },
               ].map((stat) => (
