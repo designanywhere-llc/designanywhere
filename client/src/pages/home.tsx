@@ -1,58 +1,134 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type ReactNode } from "react";
 import { Link } from "wouter";
 import { ArrowRight, Wrench, Box, Settings, Layers, Database, Factory, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MotionMedia } from "@/components/motion-media";
 import { publicUrl, serviceImageUrls } from "@/lib/publicUrl";
+import { motionSlots, realWorkFiles, type MotionSlot, type ServiceId } from "@/lib/motionMedia";
 
 const CYCLE_MS = 3000;
 const FADE_MS = 1000;
 
-const services = [
+type Service = {
+  id: ServiceId;
+  title: string;
+  description: string;
+  images: string[];
+  icon: typeof Box;
+  motion?: MotionSlot;
+};
+
+const services: Service[] = [
   {
     id: "product-design",
     title: "Product Design",
     description: "Taking customer napkin sketches and descriptions to manufacturable products",
-    images: serviceImageUrls("product-design"),
+    images: serviceImageUrls("product-design", realWorkFiles["product-design"]),
     icon: Box,
+    motion: motionSlots.productDesign,
   },
   {
     id: "prototype-dfm",
     title: "Prototype & DFM",
     description: "3D printing, testing and refining, to improving prototypes with Design For Manufacturing",
-    images: serviceImageUrls("prototype-dfm"),
+    images: serviceImageUrls("prototype-dfm", realWorkFiles["prototype-dfm"]),
     icon: Layers,
   },
   {
     id: "machine-tooling",
     title: "Machine & Tooling Design",
     description: "Custom machinery, tooling for existing machines, PDM server and vault creation, assembly and quality/buy-off testing",
-    images: serviceImageUrls("machine-tooling"),
+    images: serviceImageUrls("machine-tooling", realWorkFiles["machine-tooling"]),
     icon: Wrench,
+    motion: motionSlots.machineTooling,
   },
   {
     id: "cad-3d-modeling",
     title: "3D Modeling & CAD Services",
     description: "Using SolidWorks and GD&T, delivering parts, assemblies, and drawings",
-    images: serviceImageUrls("cad-3d-modeling"),
+    images: serviceImageUrls("cad-3d-modeling", realWorkFiles["cad-3d-modeling"]),
     icon: Settings,
+    motion: motionSlots.cad3d,
   },
   {
     id: "pdm-plm",
     title: "PDM/PLM Creation",
     description: "Building SolidWorks PDM Servers, Databases, Vaults and Workflows connected to your desired properties",
-    images: serviceImageUrls("pdm-plm"),
+    images: serviceImageUrls("pdm-plm", realWorkFiles["pdm-plm"]),
     icon: Database,
   },
   {
     id: "manufacturing-consultation",
     title: "Manufacturing Solutions Consultation",
     description: "From resolving issues with machinery and manufacturing lines to packaging development",
-    images: serviceImageUrls("manufacturing-consultation"),
+    images: serviceImageUrls("manufacturing-consultation", realWorkFiles["manufacturing-consultation"]),
     icon: Factory,
   },
 ];
 
-function CyclingServiceCard({ service }: { service: typeof services[0] }) {
+function ServiceCardFrame({
+  service,
+  media,
+  onMouseEnter,
+  onMouseLeave,
+}: {
+  service: Service;
+  media: ReactNode;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+}) {
+  const Icon = service.icon;
+  return (
+    <div
+      data-testid={`card-service-${service.id}`}
+      className="group rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm hover-elevate transition-all duration-300"
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+    >
+      <div className="relative h-52 overflow-hidden">
+        {media}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-900/50 to-transparent" style={{ zIndex: 3 }} />
+        <div className="pointer-events-none absolute bottom-3 left-4" style={{ zIndex: 4 }}>
+          <div className="bg-blue-600/90 backdrop-blur-sm p-2 rounded-lg">
+            <Icon className="w-5 h-5 text-white" />
+          </div>
+        </div>
+      </div>
+      <div className="p-6">
+        <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-blue-700 transition-colors">
+          {service.title}
+        </h3>
+        <p className="text-slate-500 text-sm leading-relaxed">
+          {service.description}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function MotionServiceCard({ service }: { service: Service }) {
+  const motion = service.motion;
+  if (!motion) return null;
+  return (
+    <ServiceCardFrame
+      service={service}
+      media={
+        <MotionMedia
+          testId={`motion-${service.id}`}
+          videoSrc={publicUrl(motion.video)}
+          mobileVideoSrc={motion.mobileVideo ? publicUrl(motion.mobileVideo) : undefined}
+          poster={publicUrl(motion.poster)}
+          images={service.images}
+          loop={motion.loop}
+          eager={motion.eager}
+          alt={service.title}
+        />
+      }
+    />
+  );
+}
+
+function CyclingServiceCard({ service }: { service: Service }) {
   const images = service.images;
   const n = images.length;
 
@@ -133,48 +209,31 @@ function CyclingServiceCard({ service }: { service: typeof services[0] }) {
   // Cleanup on unmount
   useEffect(() => cancel, []);
 
-  const Icon = service.icon;
   const TRANSITION = `opacity ${FADE_MS}ms ease-in-out`;
 
   return (
-    <div
-      data-testid={`card-service-${service.id}`}
-      className="group rounded-xl overflow-hidden bg-white border border-slate-200 shadow-sm hover-elevate transition-all duration-300"
+    <ServiceCardFrame
+      service={service}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-    >
-      <div className="relative h-52 overflow-hidden">
-        {/* Back layer — hidden, preloaded with the upcoming image */}
-        <img
-          src={backSrc}
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ opacity: frontOnTop ? 0 : 1, transition: TRANSITION, zIndex: 1 }}
-        />
-        {/* Front layer — the currently visible image */}
-        <img
-          src={frontSrc}
-          alt={service.title}
-          className="absolute inset-0 w-full h-full object-cover"
-          style={{ opacity: frontOnTop ? 1 : 0, transition: TRANSITION, zIndex: 2 }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/50 to-transparent" style={{ zIndex: 3 }} />
-        <div className="absolute bottom-3 left-4" style={{ zIndex: 4 }}>
-          <div className="bg-blue-600/90 backdrop-blur-sm p-2 rounded-lg">
-            <Icon className="w-5 h-5 text-white" />
-          </div>
-        </div>
-      </div>
-      <div className="p-6">
-        <h3 className="text-lg font-bold text-slate-900 mb-2 group-hover:text-blue-700 transition-colors">
-          {service.title}
-        </h3>
-        <p className="text-slate-500 text-sm leading-relaxed">
-          {service.description}
-        </p>
-      </div>
-    </div>
+      media={
+        <>
+          <img
+            src={backSrc}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ opacity: frontOnTop ? 0 : 1, transition: TRANSITION, zIndex: 1 }}
+          />
+          <img
+            src={frontSrc}
+            alt={service.title}
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ opacity: frontOnTop ? 1 : 0, transition: TRANSITION, zIndex: 2 }}
+          />
+        </>
+      }
+    />
   );
 }
 
@@ -191,14 +250,17 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}
-      <section
-        className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
-        style={{
-          backgroundImage: `url('${publicUrl("images/hero-engineering.jpg")}')`,
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      >
+      <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-slate-900">
+        <MotionMedia
+          testId="motion-hero"
+          videoSrc={publicUrl(motionSlots.hero.video)}
+          mobileVideoSrc={publicUrl(motionSlots.hero.mobileVideo)}
+          poster={publicUrl(motionSlots.hero.poster)}
+          images={motionSlots.hero.images}
+          loop={motionSlots.hero.loop}
+          eager={motionSlots.hero.eager}
+          alt=""
+        />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/80 via-slate-900/65 to-slate-900/80" />
 
         {/* Content — pt-20 keeps the badge clear of the fixed 64px header */}
@@ -270,10 +332,26 @@ export default function Home() {
             </p>
           </div>
 
+          <div className="relative mx-auto mb-16 aspect-video max-w-5xl overflow-hidden rounded-2xl border border-slate-700 shadow-2xl">
+            <MotionMedia
+              testId="motion-services-intro"
+              videoSrc={publicUrl(motionSlots.servicesIntro.video)}
+              poster={publicUrl(motionSlots.servicesIntro.poster)}
+              images={motionSlots.servicesIntro.images}
+              loop={motionSlots.servicesIntro.loop}
+              eager={motionSlots.servicesIntro.eager}
+              alt=""
+            />
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {services.map((service) => (
-              <CyclingServiceCard key={service.id} service={service} />
-            ))}
+            {services.map((service) =>
+              service.motion ? (
+                <MotionServiceCard key={service.id} service={service} />
+              ) : (
+                <CyclingServiceCard key={service.id} service={service} />
+              ),
+            )}
           </div>
 
           <div className="text-center mt-14">

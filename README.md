@@ -11,13 +11,15 @@ Marketing site for [Design Anywhere](https://designanywhere.org) — a remote me
 
 Pages is published from the Vite client build (`dist/public`) by `.github/workflows/pages.yml`. The deploy artifact includes a root `CNAME` (`designanywhere.org`). The workflow builds with `BASE_PATH` from `actions/configure-pages` (`/` on a custom domain so assets load at the apex).
 
-## Service card photos
+## Service card photos and motion
 
-Homepage service cards cycle 4 images on hover. Drop real job photos into:
+The homepage hero loops the logo sting under the headline. The Our Services intro loops the process clip. Product Design, 3D Modeling & CAD, and Machine & Tooling play their clip first, then cycle that card's real-work photos.
 
-`client/public/images/services/<service-id>/01.jpg` … `04.jpg`
+Drop real job photos into:
 
-See [`client/public/images/services/README.md`](client/public/images/services/README.md) for folder names, sizing, and the filename convention. Replacing those files does not require a code change.
+`client/public/images/services/<service-id>/02.jpg` … `04.jpg`
+
+`01.jpg` stock leads are not in the rotation. See [`client/public/images/services/README.md`](client/public/images/services/README.md).
 
 ## Contact form
 
