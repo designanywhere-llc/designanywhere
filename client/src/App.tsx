@@ -1,4 +1,5 @@
-import { Router, Switch, Route } from "wouter";
+import { useEffect } from "react";
+import { Router, Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -9,6 +10,7 @@ import Contact from "@/pages/contact";
 import Pricing from "@/pages/pricing";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { applyDocumentMeta, pageForPath } from "@/lib/seo";
 
 /** Vite BASE_URL always has a trailing slash; wouter's base must not. */
 const routerBase = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -24,11 +26,20 @@ function Routes() {
   );
 }
 
-function App() {
+function DocumentMeta() {
+  const [location] = useLocation();
+  useEffect(() => {
+    applyDocumentMeta(pageForPath(location), import.meta.env.BASE_URL);
+  }, [location]);
+  return null;
+}
+
+function App({ ssrPath }: { ssrPath?: string } = {}) {
   return (
-    <Router base={routerBase}>
+    <Router base={routerBase} ssrPath={ssrPath}>
       <QueryClientProvider client={queryClient}>
         <TooltipProvider>
+          <DocumentMeta />
           <Toaster />
           <Navbar />
           <Routes />

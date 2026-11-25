@@ -6,12 +6,12 @@
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "tsx script/build.ts",
-    "build:client": "vite build",
+    "build:client": "vite build && tsx script/postbuild-static.ts",
     "preview": "vite preview",
     "test:quote": "tsx --test client/src/lib/estimate.test.ts client/src/lib/projectEstimate.test.ts shared/contact.test.ts",
     "start": "NODE_ENV=production node dist/index.cjs",
     "check": "tsc",
-    "test": "tsx --test client/src/lib/submitContact.test.ts client/src/lib/motionMedia.test.ts services/lead-api/src/lead.test.ts && node scripts/smoke-lead-api.mjs",
+    "test": "tsx --test client/src/lib/submitContact.test.ts client/src/lib/motionMedia.test.ts client/src/lib/seo.test.ts services/lead-api/src/lead.test.ts && node scripts/smoke-lead-api.mjs",
     "leads:list": "tsx scripts/list-leads.ts",
     "db:push": "drizzle-kit push"
   },
@@ -102,6 +102,7 @@
     "drizzle-kit": "^0.31.8",
     "esbuild": "^0.25.0",
     "postcss": "^8.4.47",
+    "sharp": "^0.35.5",
     "tailwindcss": "^3.4.17",
     "tsx": "^4.20.5",
     "typescript": "5.6.3",

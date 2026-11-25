@@ -138,14 +138,20 @@ export function resolvePlayback(
   };
 }
 
-/** Attach a video source only once the slot may actually play. */
+/**
+ * Attach a video source only once the slot may actually play.
+ * The hero passes `lcpSettled: false` until the poster has a chance to paint,
+ * so the clip does not compete with the largest contentful paint.
+ */
 export function shouldAttachVideoSource(opts: {
   reducedMotion: boolean;
   eager: boolean;
   inView: boolean;
+  lcpSettled?: boolean;
 }): boolean {
   if (opts.reducedMotion) return false;
-  return opts.eager || opts.inView;
+  if (opts.eager) return opts.lcpSettled !== false;
+  return opts.inView;
 }
 
 export function nextImageIndex(current: number, count: number): number {

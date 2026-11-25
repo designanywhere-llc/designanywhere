@@ -123,7 +123,7 @@ npm start              # production Express (dist/index.cjs)
 2. Push to `main` (or run **Deploy GitHub Pages** via workflow_dispatch).
 3. Canonical: **https://designanywhere.org** (preview: **https://designanywhere-llc.github.io/designanywhere/**).
 
-The workflow builds with `BASE_PATH` from `actions/configure-pages` so asset URLs work on the project site (`/designanywhere/`) and on the custom domain (`/`). Client routes `/`, `/contact`, and `/pricing` are emitted as folders plus a `404.html` SPA fallback.
+The workflow builds with `BASE_PATH` from `actions/configure-pages` so asset URLs work on the project site (`/designanywhere/`) and on the custom domain (`/`). `npm run build:client` prerenders `/`, `/contact/`, and `/pricing/` as their own HTML (unique title, description, canonical URL, and JSON-LD) plus `404.html`, `robots.txt`, and `sitemap.xml`. Canonical and sitemap URLs use `https://designanywhere.org`.
 
 ### Custom domain
 

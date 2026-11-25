@@ -3,6 +3,9 @@ import { Link } from "wouter";
 import { ArrowRight, Wrench, Box, Settings, Layers, Database, Factory, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MotionMedia } from "@/components/motion-media";
+import { ResponsiveImage } from "@/components/responsive-image";
+import { serviceCatalog } from "@/content/services";
+import { CARD_IMAGE_SIZES, HERO_IMAGE_SIZES, INTRO_IMAGE_SIZES } from "@/lib/imageMeta";
 import { publicUrl, serviceImageUrls } from "@/lib/publicUrl";
 import { motionSlots, realWorkFiles, type MotionSlot, type ServiceId } from "@/lib/motionMedia";
 
@@ -18,53 +21,21 @@ type Service = {
   motion?: MotionSlot;
 };
 
-const services: Service[] = [
-  {
-    id: "product-design",
-    title: "Product Design",
-    description: "Taking customer napkin sketches and descriptions to manufacturable products",
-    images: serviceImageUrls("product-design", realWorkFiles["product-design"]),
-    icon: Box,
-    motion: motionSlots.productDesign,
-  },
-  {
-    id: "prototype-dfm",
-    title: "Prototype & DFM",
-    description: "3D printing, testing and refining, to improving prototypes with Design For Manufacturing",
-    images: serviceImageUrls("prototype-dfm", realWorkFiles["prototype-dfm"]),
-    icon: Layers,
-  },
-  {
-    id: "machine-tooling",
-    title: "Machine & Tooling Design",
-    description: "Custom machinery, tooling for existing machines, PDM server and vault creation, assembly and quality/buy-off testing",
-    images: serviceImageUrls("machine-tooling", realWorkFiles["machine-tooling"]),
-    icon: Wrench,
-    motion: motionSlots.machineTooling,
-  },
-  {
-    id: "cad-3d-modeling",
-    title: "3D Modeling & CAD Services",
-    description: "Using SolidWorks and GD&T, delivering parts, assemblies, and drawings",
-    images: serviceImageUrls("cad-3d-modeling", realWorkFiles["cad-3d-modeling"]),
-    icon: Settings,
-    motion: motionSlots.cad3d,
-  },
-  {
-    id: "pdm-plm",
-    title: "PDM/PLM Creation",
-    description: "Building SolidWorks PDM Servers, Databases, Vaults and Workflows connected to your desired properties",
-    images: serviceImageUrls("pdm-plm", realWorkFiles["pdm-plm"]),
-    icon: Database,
-  },
-  {
-    id: "manufacturing-consultation",
-    title: "Manufacturing Solutions Consultation",
-    description: "From resolving issues with machinery and manufacturing lines to packaging development",
-    images: serviceImageUrls("manufacturing-consultation", realWorkFiles["manufacturing-consultation"]),
-    icon: Factory,
-  },
-];
+const serviceMedia: Record<ServiceId, { icon: typeof Box; motion?: MotionSlot }> = {
+  "product-design": { icon: Box, motion: motionSlots.productDesign },
+  "prototype-dfm": { icon: Layers },
+  "machine-tooling": { icon: Wrench, motion: motionSlots.machineTooling },
+  "cad-3d-modeling": { icon: Settings, motion: motionSlots.cad3d },
+  "pdm-plm": { icon: Database },
+  "manufacturing-consultation": { icon: Factory },
+};
+
+const services: Service[] = serviceCatalog.map((service) => ({
+  ...service,
+  images: serviceImageUrls(service.id, realWorkFiles[service.id]),
+  icon: serviceMedia[service.id].icon,
+  motion: serviceMedia[service.id].motion,
+}));
 
 function ServiceCardFrame({
   service,
@@ -122,6 +93,7 @@ function MotionServiceCard({ service }: { service: Service }) {
           loop={motion.loop}
           eager={motion.eager}
           alt={service.title}
+          sizes={CARD_IMAGE_SIZES}
         />
       }
     />
@@ -218,17 +190,21 @@ function CyclingServiceCard({ service }: { service: Service }) {
       onMouseLeave={() => setHovered(false)}
       media={
         <>
-          <img
+          <ResponsiveImage
             src={backSrc}
             alt=""
-            aria-hidden="true"
-            className="absolute inset-0 w-full h-full object-cover"
+            aria-hidden
+            sizes={CARD_IMAGE_SIZES}
+            pictureClassName="absolute inset-0"
+            className="h-full w-full object-cover"
             style={{ opacity: frontOnTop ? 0 : 1, transition: TRANSITION, zIndex: 1 }}
           />
-          <img
+          <ResponsiveImage
             src={frontSrc}
             alt={service.title}
-            className="absolute inset-0 w-full h-full object-cover"
+            sizes={CARD_IMAGE_SIZES}
+            pictureClassName="absolute inset-0"
+            className="h-full w-full object-cover"
             style={{ opacity: frontOnTop ? 1 : 0, transition: TRANSITION, zIndex: 2 }}
           />
         </>
@@ -260,6 +236,7 @@ export default function Home() {
           loop={motionSlots.hero.loop}
           eager={motionSlots.hero.eager}
           alt=""
+          sizes={HERO_IMAGE_SIZES}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/80 via-slate-900/65 to-slate-900/80" />
 
@@ -341,6 +318,7 @@ export default function Home() {
               loop={motionSlots.servicesIntro.loop}
               eager={motionSlots.servicesIntro.eager}
               alt=""
+              sizes={INTRO_IMAGE_SIZES}
             />
           </div>
 
