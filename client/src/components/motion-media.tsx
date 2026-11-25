@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ResponsiveImage } from "@/components/responsive-image";
+import { lookupImage } from "@/lib/imageMeta";
 import {
   nextImageIndex,
   resolvePlayback,
@@ -17,18 +19,13 @@ type MotionMediaProps = {
   eager?: boolean;
   alt: string;
   testId: string;
+  /** Responsive `sizes` for the poster and the stills that follow the clip. */
+  sizes: string;
 };
 
-function prefersReducedMotion(): boolean {
-  return (
-    typeof window !== "undefined" &&
-    window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
-}
-
 function usePrefersReducedMotion(): boolean {
-  const [reduced, setReduced] = useState(prefersReducedMotion);
-  useEffect(() => {
+  const [reduced, setReduced] = useState(false);
+  useLayoutEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setReduced(media.matches);
     update();
@@ -52,23 +49,45 @@ export function MotionMedia({
   eager = false,
   alt,
   testId,
+  sizes,
 }: MotionMediaProps) {
   const reduced = usePrefersReducedMotion();
   const playback = resolvePlayback({ loop, images }, reduced);
   const rootRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const [inView, setInView] = useState(eager);
+  const [lcpSettled, setLcpSettled] = useState(!eager);
   const [phase, setPhase] = useState<"video" | "images" | "poster">(
     playback.autoplay ? "video" : "poster",
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (reduced) {
       setPhase("poster");
       return;
     }
     setPhase((current) => (current === "poster" ? "video" : current));
   }, [reduced]);
+
+  useEffect(() => {
+    if (!eager) return;
+    let cancelled = false;
+    const start = () => {
+      if (!cancelled) setLcpSettled(true);
+    };
+    if (document.readyState === "complete") {
+      const id = window.requestAnimationFrame(start);
+      return () => {
+        cancelled = true;
+        window.cancelAnimationFrame(id);
+      };
+    }
+    window.addEventListener("load", start, { once: true });
+    return () => {
+      cancelled = true;
+      window.removeEventListener("load", start);
+    };
+  }, [eager]);
 
   useEffect(() => {
     if (eager || reduced) return;
@@ -90,13 +109,16 @@ export function MotionMedia({
     reducedMotion: reduced,
     eager,
     inView,
+    lcpSettled,
   });
 
   useEffect(() => {
     if (!attachVideo || phase !== "video") return;
     for (const src of images) {
       const preload = new Image();
-      preload.src = src;
+      const meta = lookupImage(src, import.meta.env.BASE_URL);
+      const width = meta?.widths.find((candidate) => candidate >= 800) ?? meta?.widths.at(-1);
+      preload.src = width ? src.replace(/\.(jpe?g|webp|png)$/i, `-${width}w.avif`) : src;
     }
   }, [attachVideo, phase, images]);
 
@@ -166,13 +188,15 @@ export function MotionMedia({
       data-active-src={activeSrc}
       data-reduced-motion={reduced ? "true" : "false"}
     >
-      <img
+      <ResponsiveImage
         src={poster}
         alt={phase === "poster" ? alt : ""}
         aria-hidden={phase === "poster" ? undefined : true}
+        sizes={sizes}
         loading={eager ? "eager" : "lazy"}
-        decoding="async"
-        className="absolute inset-0 h-full w-full object-cover"
+        fetchPriority={eager ? "high" : "low"}
+        pictureClassName="absolute inset-0"
+        className="h-full w-full object-cover"
       />
       {attachVideo && phase === "video" ? (
         <video
@@ -183,7 +207,7 @@ export function MotionMedia({
           playsInline
           autoPlay
           loop={playback.loop}
-          preload={eager ? "auto" : "none"}
+          preload="none"
           onEnded={() => {
             if (!playback.cycleImages) return;
             setPhase("images");
@@ -198,17 +222,21 @@ export function MotionMedia({
       ) : null}
       {phase === "images" && frontSrc ? (
         <>
-          <img
+          <ResponsiveImage
             src={backSrc}
             alt=""
-            aria-hidden="true"
-            className="absolute inset-0 h-full w-full object-cover"
+            aria-hidden
+            sizes={sizes}
+            pictureClassName="absolute inset-0"
+            className="h-full w-full object-cover"
             style={{ opacity: frontOnTop ? 0 : 1, transition, zIndex: 1 }}
           />
-          <img
+          <ResponsiveImage
             src={frontSrc}
             alt={alt}
-            className="absolute inset-0 h-full w-full object-cover"
+            sizes={sizes}
+            pictureClassName="absolute inset-0"
+            className="h-full w-full object-cover"
             style={{ opacity: frontOnTop ? 1 : 0, transition, zIndex: 2 }}
           />
         </>

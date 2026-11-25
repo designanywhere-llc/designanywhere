@@ -12,8 +12,51 @@ function viteBase(): string {
 }
 
 /**
- * GitHub Pages has no SPA fallback. Copy index.html to 404.html and to each
- * client route so /contact and /pricing work on a hard refresh.
+ * The prerendered HTML is the first paint. Running the client bundle immediately
+ * keeps the main thread busy and delays that paint on a slow phone, so the
+ * module is attached on the first frame after CSS has been applied.
+ */
+function deferClientBundle(): Plugin {
+  return {
+    name: "defer-client-bundle",
+    apply: "build",
+    transformIndexHtml: {
+      order: "post",
+      handler(html) {
+        return html.replace(
+          /<script type="module"( crossorigin)? src="([^"]+)"><\/script>/,
+          (_match, cross: string | undefined, src: string) => {
+            const crossAssign = cross ? 's.crossOrigin="anonymous";' : "";
+            return `<script>
+      (function () {
+        function load() {
+          var s = document.createElement("script");
+          s.type = "module";
+          s.src = ${JSON.stringify(src)};
+          ${crossAssign}
+          document.body.appendChild(s);
+        }
+        function arm() {
+          requestAnimationFrame(function () { requestAnimationFrame(load); });
+        }
+        if (document.readyState === "loading") {
+          document.addEventListener("DOMContentLoaded", arm, { once: true });
+        } else {
+          arm();
+        }
+      })();
+    </script>`;
+          },
+        );
+      },
+    },
+  };
+}
+
+/**
+ * GitHub Pages has no SPA fallback. Copy the shell to 404.html and to each
+ * client route so a hard refresh works even before prerender. script/postbuild-static.ts
+ * then replaces those files with per-route HTML.
  *
  * The repo-root CNAME is copied into dist/public by .github/workflows/pages.yml
  * after this build so Pages serves designanywhere.org.
@@ -43,6 +86,7 @@ export default defineConfig({
   plugins: [
     react(),
     ...(process.env.NODE_ENV !== "production" ? [runtimeErrorOverlay()] : []),
+    deferClientBundle(),
     githubPagesSpaFallback(),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined

@@ -60,7 +60,7 @@ export function ProjectEstimateResult({ result }: { result: ProjectEstimate }) {
                 {hourSummary(item)}
               </p>
             </div>
-            {item.note ? <p className="text-slate-400 text-xs mt-1">{item.note}</p> : null}
+            {item.note ? <p className="text-slate-600 text-xs mt-1">{item.note}</p> : null}
             {result.fallback ? null : (
               <p className="text-slate-600 text-sm mt-2 leading-relaxed" data-testid={`text-project-because-${item.id}`}>
                 {item.because}
@@ -78,7 +78,7 @@ export function ProjectEstimateResult({ result }: { result: ProjectEstimate }) {
       <div className="border-t border-slate-100 mt-5 pt-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <p className="text-slate-500 text-sm">Initial consultation: Free</p>
         <div className="sm:text-right">
-          <p className="text-slate-400 text-xs uppercase tracking-widest mb-1">Starting total</p>
+          <p className="text-slate-600 text-xs uppercase tracking-widest mb-1">Starting total</p>
           <p className="text-2xl font-bold text-slate-900" data-testid="text-project-starting-total">
             {formatUsd(totals.suggested)}
           </p>

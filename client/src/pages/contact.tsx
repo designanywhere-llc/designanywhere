@@ -62,8 +62,8 @@ export default function Contact() {
       <div className="bg-blue-700 py-20">
         <div className="max-w-4xl mx-auto px-6 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Mail className="w-6 h-6 text-blue-300" />
-            <span className="text-sm font-semibold tracking-[0.2em] uppercase text-blue-300">
+            <Mail className="w-6 h-6 text-blue-100" />
+            <span className="text-sm font-semibold tracking-[0.2em] uppercase text-blue-100">
               Contact Us
             </span>
           </div>
@@ -80,7 +80,7 @@ export default function Contact() {
       <div className="max-w-2xl mx-auto px-6 py-16">
         <Link href="/">
           <button
-            className="flex items-center gap-2 text-slate-500 hover:text-blue-600 text-sm font-medium mb-8 transition-colors"
+            className="flex items-center gap-2 text-slate-300 hover:text-white text-sm font-medium mb-8 transition-colors"
             data-testid="link-back-to-home"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -113,11 +113,11 @@ export default function Contact() {
           </div>
         ) : (
           <>
-            <p className="text-slate-600 mb-6 text-sm">
+            <p className="text-slate-300 mb-6 text-sm">
               Prefer email? Write us at{" "}
               <a
                 href={`mailto:${CONTACT_TO}`}
-                className="text-blue-600 hover:underline font-medium"
+                className="text-blue-300 hover:text-white hover:underline font-medium"
                 data-testid="link-email-address"
               >
                 {CONTACT_TO}

@@ -1,11 +1,13 @@
-import blandLogo from "@assets/IMG_0556_1772510791966.jpeg";
-import colorLogo from "@assets/IMG_3665_1772510712147.jpeg";
+import { publicUrl } from "@/lib/publicUrl";
 
 /*
  * Both source images have black where transparency should be (JPEG flattened
  * their original transparency to black).  mix-blend-mode: screen treats black
  * as fully transparent — screen(black, bg) = bg — so the page background shows
  * through wherever the image is black, with no other manipulation needed.
+ *
+ * The navbar serves a 240px-wide copy of the attached_assets masters. The
+ * displayed mark is about 68px wide, so the full ~1100px JPEG is not shipped.
  *
  * Image dimensions: ~1137×704 / ~1164×711  →  ratio ≈ 1.618 : 1
  *
@@ -20,6 +22,34 @@ interface LogoProps {
   height?: number;
 }
 
+function LogoMark({
+  name,
+  width,
+  height,
+  className,
+}: {
+  name: "logo-bland" | "logo-color";
+  width: number;
+  height: number;
+  className: string;
+}) {
+  return (
+    <picture className="absolute inset-0">
+      <source type="image/avif" srcSet={publicUrl(`images/brand/${name}-240w.avif`)} />
+      <source type="image/webp" srcSet={publicUrl(`images/brand/${name}-240w.webp`)} />
+      <img
+        src={publicUrl(`images/brand/${name}.jpg`)}
+        alt="Design Anywhere Logo"
+        width={width}
+        height={height}
+        decoding="async"
+        className={className}
+        style={{ transitionDuration: "400ms", mixBlendMode: "screen" }}
+      />
+    </picture>
+  );
+}
+
 export function Logo({ height = 48 }: LogoProps) {
   const width = Math.round(height * ASPECT);
 
@@ -29,17 +59,17 @@ export function Logo({ height = 48 }: LogoProps) {
       style={{ width, height }}
       data-testid="logo-image-container"
     >
-      <img
-        src={blandLogo}
-        alt="Design Anywhere Logo"
-        className="absolute inset-0 w-full h-full object-contain transition-opacity duration-400 group-hover:opacity-0"
-        style={{ transitionDuration: "400ms", mixBlendMode: "screen" }}
+      <LogoMark
+        name="logo-bland"
+        width={240}
+        height={149}
+        className="h-full w-full object-contain transition-opacity duration-400 group-hover:opacity-0"
       />
-      <img
-        src={colorLogo}
-        alt="Design Anywhere Logo"
-        className="absolute inset-0 w-full h-full object-contain opacity-0 transition-opacity duration-400 group-hover:opacity-100"
-        style={{ transitionDuration: "400ms", mixBlendMode: "screen" }}
+      <LogoMark
+        name="logo-color"
+        width={240}
+        height={146}
+        className="h-full w-full object-contain opacity-0 transition-opacity duration-400 group-hover:opacity-100"
       />
 
       {/* "DA" — concentric centre of lower ring annulus */}

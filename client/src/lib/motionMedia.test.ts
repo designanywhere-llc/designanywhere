@@ -147,6 +147,27 @@ describe("shouldAttachVideoSource", () => {
       false,
     );
   });
+
+  it("holds the hero clip until the poster can paint", () => {
+    assert.equal(
+      shouldAttachVideoSource({
+        reducedMotion: false,
+        eager: true,
+        inView: true,
+        lcpSettled: false,
+      }),
+      false,
+    );
+    assert.equal(
+      shouldAttachVideoSource({
+        reducedMotion: false,
+        eager: true,
+        inView: false,
+        lcpSettled: true,
+      }),
+      true,
+    );
+  });
 });
 
 describe("nextImageIndex", () => {

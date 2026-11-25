@@ -119,7 +119,7 @@ export default function Pricing() {
             className="bg-white border-slate-200 focus:border-slate-400 focus:ring-slate-400 min-h-36"
           />
           <div className="mt-2 flex items-start justify-between gap-4">
-            <p className="text-slate-400 text-xs">
+            <p className="text-slate-600 text-xs">
               {description.length.toLocaleString("en-US")} / {DESCRIPTION_MAX.toLocaleString("en-US")}
             </p>
           </div>
@@ -157,8 +157,8 @@ export default function Pricing() {
           </div>
 
           <div className="px-4 sm:px-8 pb-2 grid grid-cols-[1fr_auto] gap-4 items-center">
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Service</span>
-            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider w-24 text-center">Est. Hours</span>
+            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Service</span>
+            <span className="text-xs font-semibold text-slate-600 uppercase tracking-wider w-24 text-center">Est. Hours</span>
           </div>
 
           <div className="divide-y divide-slate-50">
@@ -190,9 +190,9 @@ export default function Pricing() {
                         <span className={`text-sm font-medium block ${isSelected ? "text-slate-900" : "text-slate-600"}`}>
                           {service.label}
                         </span>
-                        <span className="text-slate-400 text-xs">{formatUsd(service.rate)}/hr</span>
+                        <span className="text-slate-600 text-xs">{formatUsd(service.rate)}/hr</span>
                         {service.note ? (
-                          <span className="text-slate-400 text-xs block">{service.note}</span>
+                          <span className="text-slate-600 text-xs block">{service.note}</span>
                         ) : null}
                         {suggestion ? (
                           <span id={suggestionId} className="text-slate-500 text-xs block mt-1">
@@ -253,7 +253,7 @@ export default function Pricing() {
             <div className={`p-2 rounded-lg ${hasResult ? "bg-slate-600" : "bg-slate-200"}`}>
               <Calculator className={`w-5 h-5 ${hasResult ? "text-white" : "text-slate-400"}`} aria-hidden="true" />
             </div>
-            <h2 className={`text-lg font-bold ${hasResult ? "text-white" : "text-slate-400"}`}>
+            <h2 className={`text-lg font-bold ${hasResult ? "text-white" : "text-slate-700"}`}>
               Cost Estimate
             </h2>
           </div>
@@ -271,7 +271,7 @@ export default function Pricing() {
                     <div className="min-w-0">
                       <span className="text-slate-200 text-sm font-medium">{hourLine.label}</span>
                       {hourLine.hours != null && hourLine.hours > 0 ? (
-                        <span className="text-slate-400 text-xs block sm:inline sm:ml-2">
+                        <span className="text-slate-300 text-xs block sm:inline sm:ml-2">
                           {formatHours(hourLine.hours)} hrs × {formatUsd(hourLine.rate)}/hr
                         </span>
                       ) : null}
@@ -293,11 +293,11 @@ export default function Pricing() {
               ) : null}
 
               <div className="border-t border-slate-600 pt-4 flex items-end justify-between gap-4">
-                <p className="text-slate-400 text-sm">
+                <p className="text-slate-300 text-sm">
                   {estimate.lines.length} service{estimate.lines.length > 1 ? "s" : ""} selected
                 </p>
                 <div className="text-right">
-                  <p className="text-slate-400 text-xs uppercase tracking-widest mb-1">Estimated Total</p>
+                  <p className="text-slate-300 text-xs uppercase tracking-widest mb-1">Estimated Total</p>
                   <p
                     className="text-3xl sm:text-4xl font-bold text-white"
                     data-testid="text-estimated-cost"
@@ -308,7 +308,7 @@ export default function Pricing() {
               </div>
             </>
           ) : (
-            <p className="text-slate-400 text-sm">
+            <p className="text-slate-600 text-sm">
               Select at least one service above to see your cost estimate.
             </p>
           )}
@@ -324,9 +324,9 @@ export default function Pricing() {
           />
         ) : null}
 
-        <p className="text-center text-slate-400 text-xs px-4">
+        <p className="text-center text-slate-300 text-xs px-4">
           This is a ballpark, not a final quote. Your price depends on the real scope, and it follows a free consultation.{" "}
-          <Link href="/contact" className="text-slate-500 hover:text-slate-700 hover:underline">Contact us</Link> if you'd rather write to us directly.
+          <Link href="/contact" className="underline underline-offset-2 hover:text-white">Contact us</Link> if you'd rather write to us directly.
         </p>
       </div>
     </div>

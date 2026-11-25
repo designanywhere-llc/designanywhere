@@ -118,10 +118,10 @@ export function Footer() {
         </div>
 
         <div className="border-t border-slate-700 mt-10 pt-6 flex flex-wrap gap-4 items-center justify-between">
-          <p className="text-slate-500 text-sm">
+          <p className="text-slate-400 text-sm" suppressHydrationWarning>
             &copy; {new Date().getFullYear()} Design Anywhere LLC. All rights reserved.
           </p>
-          <p className="text-slate-600 text-xs">
+          <p className="text-slate-400 text-xs">
             designanywhere.org
           </p>
         </div>
